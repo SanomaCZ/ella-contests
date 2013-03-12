@@ -9,6 +9,7 @@ from django.conf import settings
 from ella.core.models import Publishable
 from ella.photos.models import Photo
 from ella.core.cache import CachedForeignKey, cache_this, get_cached_object
+from ella.core.custom_urls import resolver
 
 try:
     from django.utils.timezone import now
@@ -120,6 +121,9 @@ class Question(models.Model):
     @cache_this(lambda q: CHOICES_CACHE_KEY_PATTERN % q.pk)
     def choices(self):
         return list(Choice.objects.filter(question=self))
+
+    def get_absolute_url(self):
+        return resolver.reverse(self.contest, 'ella-contests-contests-detail', choice=self.position)
 
     @property
     def position(self):
