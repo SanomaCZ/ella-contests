@@ -4,12 +4,14 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
 from django.conf import settings
+from django.utils.safestring import mark_safe
 #from django.contrib.auth.models import User
 
 from ella.core.models import Publishable
 from ella.photos.models import Photo
 from ella.core.cache import CachedForeignKey, cache_this, get_cached_object
 from ella.core.custom_urls import resolver
+
 
 try:
     from django.utils.timezone import now
@@ -108,7 +110,7 @@ class Question(models.Model):
     order = models.PositiveIntegerField()
     photo = CachedForeignKey(Photo, blank=True, null=True, on_delete=models.SET_NULL)
     text = models.TextField()
-    choices_always_correct = models.BooleanField(_('Choices always correct'), default=False)
+    use_answer = models.BooleanField(_('Use answer instead choices '), default=False)
 
     choices_data = models.TextField()
 
@@ -150,6 +152,10 @@ class Choice(models.Model):
     question = CachedForeignKey(Question, verbose_name=_('Question'))
     choice = models.TextField(_('Choice text'))
     points = models.IntegerField(_('Points'), default=1, blank=True, null=True)
+
+    def __unicode__(self):
+        #TODO: use render in widget instead unicode
+        return mark_safe(u'%s' % self.choice)
 
     class Meta:
         verbose_name = _('Choice')
@@ -199,6 +205,17 @@ class Contestant(models.Model):
                 for v in vs[1].split(','):
                     points += get_cached_object(Choice, pk=v).points
         return points
+
+
+class Answer(models.Model):
+    question = CachedForeignKey(Question, verbose_name=_('Question'))
+    contestant = CachedForeignKey(Contestant, verbose_name=_('Contestant'))
+    answer = models.TextField(_('Answer text'), blank=True)
+
+    class Meta:
+        verbose_name = _('Answer')
+        verbose_name_plural = _('Answers')
+        unique_together = (('contestant', 'question',),)
 
 
 @receiver(post_delete, sender=Question)
