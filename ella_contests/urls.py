@@ -14,5 +14,5 @@ urlpatterns = patterns('',
     url('^%s/$' % slugify(_('contestant')), contest_contestant, name='ella-contests-contests-contestant'),
     url('^%s/$' % slugify(_('result')), contest_result, name='ella-contests-contests-result'),
     url('^%s/$' % slugify(_('conditions')), contest_conditions, name='ella-contests-contests-conditions'),
-    url(r'^%s/(?P<question_number>\d+)$' % slugify(_('question')), contest_detail, name='ella-contests-contests-detail')
+    url(r'^%s/(?P<question_number>\d+)/$' % slugify(_('question')), contest_detail, name='ella-contests-contests-detail')
 )

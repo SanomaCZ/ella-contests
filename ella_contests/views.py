@@ -14,7 +14,8 @@ from ella_contests.storages import storage
 
 
 class ContestBaseView(FormView):
-    template_name = 'form.html'
+    template_name = None
+    ajax_template_name = None
 
     @property
     def contest(self):
@@ -23,8 +24,12 @@ class ContestBaseView(FormView):
         return self._contest
 
     @property
+    def current_page(self):
+        return int(self.kwargs.get('question_number', 1))
+
+    @property
     def question_number(self):
-        return self.kwargs.get('question_number', 1) - 1
+        return self.current_page - 1
 
     @property
     def question(self):
@@ -42,7 +47,10 @@ class ContestBaseView(FormView):
         return self._next_question
 
     def get_template_names(self):
-        return get_templates_from_publishable(self.template_name, self.contest)
+        template_name = self.template_name
+        if self.request.is_ajax():
+            template_name = self.ajax_template_name
+        return get_templates_from_publishable(template_name, self.contest)
 
     def get_context_data(self, **kwargs):
         data = super(ContestBaseView, self).get_context_data(**kwargs)
@@ -50,14 +58,15 @@ class ContestBaseView(FormView):
         return data
 
 
-class ContestDetailView(ContestBaseView):
-    form_class = QuestionForm
+class ContestDetailFormView(ContestBaseView):
+    template_name = 'form.html'
+    ajax_template_name = 'form_async.html'
 
     def get_form_class(self):
-        return self.form_class(self.question)
+        return QuestionForm(self.question)
 
     def get_initial(self):
-        data = storage.get_data(self.contest, self.question_number, self.request)
+        data = storage.get_data(self.contest, self.current_page, self.request)
         #FIXME: data may be None but what form needed?
         return data
 
@@ -69,34 +78,50 @@ class ContestDetailView(ContestBaseView):
     def form_valid(self, form):
         if not self.contest.is_active:
             return self.form_invalid(form)
-        #TODO: save data from form to cookie or in form? -> form.save()
-        response = super(ContestDetailView, self).form_valid(form)
-        storage.set_data(self.contest, self.question_number, self.form.cleaned_data, response)
-        storage.set_last_step(self.contest, self.question_number, response)
+        response = super(ContestDetailFormView, self).form_valid(form)
+        storage.set_data(self.contest, self.current_page, form.cleaned_data, response)
+        storage.set_last_step(self.contest, self.current_page, response)
         return response
+
+    def get_context_data(self, **kwargs):
+        data = super(ContestDetailFormView, self).get_context_data(**kwargs)
+        data.update({
+            'current_page': self.current_page,
+            'question': self.question,
+            'question_number': self.question_number,
+        })
+        return data
 
     @method_decorator(csrf_protect)
     @method_decorator(transaction.commit_on_success)
     def dispatch(self, request, context, *args, **kwargs):
         self.context = context
+        self.kwargs = kwargs
         #TODO: add check if user can see this step else redirect
         last_step = storage.get_last_step(self.contest, request)
         if last_step is None:
-            url = resolver.reverse(self.contest, 'ella-contests-contests-detail', choice=1)
+            if self.current_page == 1:
+                return super(ContestDetailFormView, self).dispatch(request, *args, **kwargs)
+            url = resolver.reverse(self.contest, 'ella-contests-contests-detail', question_number=1)
             return HttpResponseRedirect(url)
-        if self.question_number != last_step + 1:
+        if self.current_page != last_step + 1:
             if self.next_question:
-                url = resolver.reverse(self.contest, 'ella-contests-contests-detail', choice=self.next_question.position)
+                url = resolver.reverse(self.contest, 'ella-contests-contests-detail',
+                                       question_number=self.next_question.position)
             else:
                 url = resolver.reverse(self.contest, 'ella-contests-contests-contestant')
             return HttpResponseRedirect(url)
-        return super(ContestBaseView, self).dispatch(request, *args, **kwargs)
+        return super(ContestDetailFormView, self).dispatch(request, *args, **kwargs)
 
 
 class ContestContestantView(ContestBaseView):
     template_name = 'contestant.html'
+    ajax_template_name = 'contestant_async.html'
     form_class = ContestantForm
-    question_form_class = QuestionForm
+
+    @property
+    def question_form_class(self):
+        return QuestionForm
 
     def get_initial(self):
         initial_data = super(ContestContestantView, self).get_initial()
@@ -123,42 +148,56 @@ class ContestContestantView(ContestBaseView):
     def get_success_url(self):
         return resolver.reverse(self.contest, 'ella-contests-contests-result')
 
+    def form_invalid(self, form):
+        response = super(ContestContestantView, self).form_invalid(form)
+        if getattr(self, 'questions_data_invalid', False):
+            storage.remove_last_step(self.contest, response)
+        return response
+
     def form_valid(self, form):
         if not self.contest.is_active:
             return self.form_invalid(form)
-        #TODO: save data from form to cookie or in form? -> form.save()
         form.save()
-        return super(ContestContestantView, self).form_valid(form)
+        response = super(ContestContestantView, self).form_valid(form)
+        storage.remove_all_data(self.contest, response)
+        return response
 
     @method_decorator(csrf_protect)
     @method_decorator(transaction.commit_on_success)
     def dispatch(self, request, context, *args, **kwargs):
         self.context = context
+        self.kwargs = kwargs
         last_step = storage.get_last_step(self.contest, request)
         if last_step is None:
-            url = resolver.reverse(self.contest, 'ella-contests-contests-detail', choice=1)
+            url = resolver.reverse(self.contest, 'ella-contests-contests-detail', question_number=1)
             return HttpResponseRedirect(url)
         if self.contest.questions_count != last_step:
-            url = resolver.reverse(self.contest, 'ella-contests-contests-detail', choice=last_step + 1)
+            url = resolver.reverse(self.contest, 'ella-contests-contests-detail', question_number=last_step + 1)
             return HttpResponseRedirect(url)
-        return super(ContestBaseView, self).dispatch(request, *args, **kwargs)
+        return super(ContestContestantView, self).dispatch(request, *args, **kwargs)
 
 
 def contest_result(request, context):
+    template_name = 'result.html'
+    if request.is_ajax():
+        template_name = 'result_async.html'
     return render_to_response(
-        get_templates_from_publishable('result.html', context['object']),
+        get_templates_from_publishable(template_name, context['object']),
         context,
         context_instance=RequestContext(request)
     )
 
 
 def contest_conditions(request, context):
+    template_name = 'conditions.html'
+    if request.is_ajax():
+        template_name = 'conditions_async.html'
     return render_to_response(
-        get_templates_from_publishable('conditions.html', context['object']),
+        get_templates_from_publishable(template_name, context['object']),
         context,
         context_instance=RequestContext(request)
     )
 
 
-contest_detail = ContestDetailView.as_view()
+contest_detail = ContestDetailFormView.as_view()
 contest_contestant = ContestContestantView.as_view()

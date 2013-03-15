@@ -7,4 +7,4 @@ from ella_contests.models import Contest
 
 # register custom url patterns
 resolver.register(urlpatterns, model=Contest)
-resolver.register_custom_detail(Contest, contest_detail)
+#resolver.register_custom_detail(Contest, contest_detail)

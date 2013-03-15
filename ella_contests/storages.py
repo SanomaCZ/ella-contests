@@ -13,7 +13,10 @@ class BaseStorage(object):
     def remove_data(self, contest, step, *args, **kwargs):
         pass
 
-    def remove_all_data(self, contest, step_max, *args, **kwargs):
+    def remove_all_data(self, contest, *args, **kwargs):
+        pass
+
+    def remove_last_step(self, contest, *args, **kwargs):
         pass
 
     def set_last_step(self, contest, step, *args, **kwargs):
@@ -33,7 +36,7 @@ class CookieStorage(BaseStorage):
         return self.cookie_name_step % (contest.pk, step)
 
     def _get_cookie_name_last_step(self, contest):
-        return self.cookie_name_step % (contest.pk)
+        return self.cookie_name_last_step % (contest.pk)
 
     def _data_to_json(self, data):
         return simplejson.dumps(data)
@@ -68,6 +71,17 @@ class CookieStorage(BaseStorage):
         if data is not None:
             data = int(data)
         return data
+
+    def remove_last_step(self, contest, response, *args, **kwargs):
+        response.delete_cookie(self._get_cookie_name_last_step(contest),
+                               domain=self.cookie_domain)
+
+    def remove_all_data(self, contest, response, *args, **kwargs):
+        response.delete_cookie(self._get_cookie_name_last_step(contest),
+                               domain=self.cookie_domain)
+        for i in range(1, contest.questions_count + 1):
+            response.delete_cookie(self._get_cookie_name_step(contest, i),
+                                   domain=self.cookie_domain)
 
 
 storage = CookieStorage()

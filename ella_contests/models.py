@@ -4,7 +4,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
 from django.conf import settings
-from django.utils.safestring import mark_safe
+#from django.utils.safestring import mark_safe
 #from django.contrib.auth.models import User
 
 from ella.core.models import Publishable
@@ -69,7 +69,7 @@ class Contest(Publishable):
             .order_by('count_guess_difference'))
 
     @property
-    def current_text(self):
+    def content(self):
         """
         Objects text content depends on its current life-cycle stage
         """
@@ -106,13 +106,17 @@ class Contest(Publishable):
 
 
 class Question(models.Model):
-    contest = CachedForeignKey(Contest)
+    contest = CachedForeignKey(Contest, related_name='question_qs')
     order = models.PositiveIntegerField()
     photo = CachedForeignKey(Photo, blank=True, null=True, on_delete=models.SET_NULL)
     text = models.TextField()
-    use_answer = models.BooleanField(_('Use answer instead choices '), default=False)
+    is_required = models.BooleanField(_('Is required'), default=True)
 
-    choices_data = models.TextField()
+    def __unicode__(self):
+        #TODO: use contest in this too
+        return u'%s - %s %d' % (self.contest if self.contest_id else 'Contest',
+                                _('Question'),
+                                self.order)
 
     class Meta:
         verbose_name = _('Question')
@@ -125,12 +129,12 @@ class Question(models.Model):
         return list(Choice.objects.filter(question=self))
 
     def get_absolute_url(self):
-        return resolver.reverse(self.contest, 'ella-contests-contests-detail', choice=self.position)
+        return resolver.reverse(self.contest, 'ella-contests-contests-detail', question_number=self.position)
 
     @property
     def position(self):
         if not hasattr(self, '_position'):
-            self._position = self.contest.question_set.filter(order__lte=self.order).count()
+            self._position = self.contest.question_qs.filter(order__lte=self.order).count()
         return self._position
 
     @property
@@ -142,7 +146,7 @@ class Question(models.Model):
 
     @property
     def next(self):
-        if self.position < self.contest.questions_count():
+        if self.position < self.contest.questions_count:
             return self.contest[self.position]
         else:
             return None
@@ -151,11 +155,13 @@ class Question(models.Model):
 class Choice(models.Model):
     question = CachedForeignKey(Question, verbose_name=_('Question'))
     choice = models.TextField(_('Choice text'))
-    points = models.IntegerField(_('Points'), default=1, blank=True, null=True)
+    is_correct = models.BooleanField(_('Is correct'), default=False)
+    inserted_by_user = models.BooleanField(_('Inserted by user'), default=False)
+    #TODO: add check that is_correct is only one choice per question
 
     def __unicode__(self):
-        #TODO: use render in widget instead unicode
-        return mark_safe(u'%s' % self.choice)
+        #TODO: use render in widget instead unicode or change all
+        return u'%s: choice pk(%d)' % (self.question if self.question_id else 'Choice', self.pk)
 
     class Meta:
         verbose_name = _('Choice')
@@ -173,7 +179,6 @@ class Contestant(models.Model):
     email = models.EmailField(_('email'))
     phone_number = models.CharField(_('Phone number'), max_length=20, blank=True)
     address = models.CharField(_('Address'), max_length=200, blank=True)
-    choices = models.TextField(_('Choices'), blank=True)
     count_guess = models.IntegerField(_('Count guess'))
     winner = models.BooleanField(_('Winner'), default=False)
     created = models.DateTimeField(editable=False)
@@ -208,14 +213,18 @@ class Contestant(models.Model):
 
 
 class Answer(models.Model):
-    question = CachedForeignKey(Question, verbose_name=_('Question'))
     contestant = CachedForeignKey(Contestant, verbose_name=_('Contestant'))
+    choice = CachedForeignKey(Choice, verbose_name=_('Choice'))
     answer = models.TextField(_('Answer text'), blank=True)
+
+    def __unicode__(self):
+        return u'%s: %s' % (self.contestant if self.contestant_id else 'Contestant',
+                            self.choice if self.choice_id else 'Choice',)
 
     class Meta:
         verbose_name = _('Answer')
         verbose_name_plural = _('Answers')
-        unique_together = (('contestant', 'question',),)
+        unique_together = (('contestant', 'choice',),)
 
 
 @receiver(post_delete, sender=Question)

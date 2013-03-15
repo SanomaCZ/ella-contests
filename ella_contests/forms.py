@@ -1,23 +1,20 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
+from ella.core.cache import get_cached_object
+
 from ella_contests.storages import storage
-from ella_contests.models import Contestant, Answer
+from ella_contests.models import Contestant, Answer, Choice
+from ella_contests.fields import ContestChoiceField
 
 
 def QuestionForm(question):
-    if question.use_answer:
-        choice_field = forms.CharField(max_length=200,
-                                       widget=forms.Textarea,
-                                       required=False)
-    else:
-        #TODO: use own Choice field that control
-        #if objects exits as ModelChoiceField in to_python method
-        choice_field = forms.ChoiceField(
-                choices=[(c.pk, c) for c in question.choices],
-                widget=forms.RadioSelect,
-                required=True
-        )
+    #TODO: use own Choice field that control
+    #if objects exits as ModelChoiceField in to_python method
+    choice_field = ContestChoiceField(
+            choices=[(c.pk, c.choice, c.inserted_by_user) for c in question.choices],
+            required=True if question.is_required else False
+    )
 
     class _QuestionForm(forms.Form):
         """
@@ -32,7 +29,7 @@ class ContestantForm(forms.ModelForm):
 
     class Meta:
         model = Contestant
-        exclude = ('contest', 'user', 'choices', 'winner', 'created')
+        exclude = ('contest', 'user', 'winner', 'created')
 
     def __init__(self, view_instance, *args, **kwargs):
         self.view_instance = view_instance
@@ -42,29 +39,25 @@ class ContestantForm(forms.ModelForm):
 
     def save(self, commit=True):
         #TODO: get logic for count choices
-        answers, choices = self._prepare_answers_for_save(self.qforms)
         contestant = super(ContestantForm, self).save(commit=False)
         contestant.contest = self.contest
-        contestant.choices = choices
         if self.request.user.is_authenticated():
             contestant.user = self.request.user
         if commit:
             contestant.save()
-            for q, a in answers:
-                Answer.objects.create(question=q, contestant=contestant, answer=a)
+            for q, f in self.qforms:
+                ch_pk = f.cleaned_data['choice']
+                if ch_pk:
+                    if isinstance(ch_pk, (tuple, list)):
+                        ch_pk, ans = ch_pk
+                        data = dict(contestant=contestant,
+                                    choice=get_cached_object(Choice, pk=ch_pk),
+                                    answer=ans)
+                    else:
+                        data = dict(contestant=contestant,
+                                    choice=get_cached_object(Choice, pk=ch_pk))
+                    Answer.objects.create(**data)
         return contestant
-
-    def _prepare_answers_for_save(self, qforms):
-        answers = []
-        choices = []
-        for question, f in sorted(qforms, key=lambda q: q[0].id):
-            if question.use_answer:
-                answers.append((question, f.cleaned_data['choice']))
-            else:
-                choices.append('%d:%s' % (question.id, f.cleaned_data['choice']))
-
-        choices = '|'.join(choices)
-        return answers, choices
 
     def _questions_valid(self):
         qforms = []
@@ -81,8 +74,8 @@ class ContestantForm(forms.ModelForm):
         return forms_are_valid
 
     def clean(self):
-        email = self.cleaned_data['email']
-        if Contestant.objects.filter(email=email, contest=self.contest).count() > 0:
+        email = self.cleaned_data.get('email', None)
+        if email and Contestant.objects.filter(email=email, contest=self.contest).count() > 0:
             raise forms.ValidationError(_("Your email is not unique, you probably competed"))
         if not self._questions_valid():
             raise forms.ValidationError(_("Some of the questions are filled incorrect"))
