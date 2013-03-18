@@ -1,4 +1,4 @@
-from django.db import models, connection, IntegrityError
+from django.db import models, IntegrityError
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save, post_delete
@@ -9,7 +9,7 @@ from django.core.cache import cache
 
 from ella.core.models import Publishable
 from ella.photos.models import Photo
-from ella.core.cache import CachedForeignKey, cache_this, get_cached_object
+from ella.core.cache import CachedForeignKey, cache_this
 from ella.core.custom_urls import resolver
 
 from ella_contests.conf import contests_settings
@@ -46,23 +46,22 @@ class Contest(Publishable):
 
     @property
     def right_choices(self):
-        return '|'.join(
-            '%d:%s' % (
-                q.id,
-                ','.join(str(c.id) for c in sorted(q.choices, key=lambda ch: ch.id) if c.points > 0)
-            ) for q in sorted(self.questions, key=lambda q: q.id)
-        )
+        qqs = Question.objects.filter(contest=self, is_required=True)
+        return Choice.objects.filter(question__id__in=qqs, is_correct=True)
 
-    def get_correct_answers(self):
+    @property
+    def right_answers(self):
+        return Answer.objects.filter(choice__id__in=self.right_choices).exclude(answer="",
+                                                                                choice__inserted_by_user=True)
+
+    def get_contestants_with_correct_answer(self):
         """
         Returns queryset of contestants with correct answers on the current
         contest
         """
-        count = Contestant.objects.filter(contest=self).count()
-        return (Contestant.objects.filter(contest=self).filter(choices=self.right_choices)
-            .extra(select={'count_guess_difference': 'ABS(%s - %d)' %
-                (connection.ops.quote_name('count_guess'), count)})
-            .order_by('count_guess_difference'))
+        qs = Contestant.objects.filter(answer__id__in=self.right_answers)\
+            .annotate(answers_count=models.Count('answer')).order_by('-answers_count', 'created')
+        return qs
 
     @property
     def content(self):
@@ -214,18 +213,12 @@ class Contestant(models.Model):
         super(Contestant, self).save(**kwargs)
 
     @property
-    def points(self):
-        """
-        Parse choices represented as a string
-        and returns reached points count
-        """
-        points = 0
-        if self.choices:
-            for q in self.choices.split('|'):
-                vs = q.split(':')
-                for v in vs[1].split(','):
-                    points += get_cached_object(Choice, pk=v).points
-        return points
+    def my_right_answers(self):
+        return self.contest.right_answers.filter(contestant=self)
+
+    def get_my_text_answers(self):
+        return Answer.objects.filter(choice__question__contest=self.contest,
+                                     contestant=self).exclude(choice__inserted_by_user=False)
 
 
 class Answer(models.Model):

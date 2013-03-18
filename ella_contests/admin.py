@@ -29,7 +29,7 @@ class ContestAdmin(PublishableAdmin):
         if obj.is_not_yet_active:
             return 0
         else:
-            return obj.__class__.objects.count()
+            return obj.contestant_set.count()
     contestants_count.short_description = _('count of contestants')
 
     def state(self, obj):
