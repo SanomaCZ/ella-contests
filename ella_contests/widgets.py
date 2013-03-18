@@ -22,11 +22,15 @@ class RadioFieldRenderer(fwidgets.RadioFieldRenderer):
 
     def _get_widgets(self, choice, i):
         widgets = []
+        # check if choice has set inserted_by_user to True
         if choice[2]:
             value = self.value if isinstance(self.value, (tuple, list)) else (self.value, "")
             text_name = self.text_name_pattern % (self.name, choice[0])
-            widgets.append(fwidgets.RadioInput(self.name, value[0], self.attrs.copy(), choice, i))
-            widgets.append(fwidgets.TextInput().render(name=text_name, value=value[1]))
+            rw = fwidgets.RadioInput(self.name, value[0], self.attrs.copy(), choice, i)
+            widgets.append(rw)
+            attrs = dict(onfocus='javascript:document.getElementById("%s_%s").checked = true;return false;' % (rw.attrs['id'],
+                                                                                                               rw.index))
+            widgets.append(fwidgets.TextInput().render(name=text_name, value=value[1], attrs=attrs))
         else:
             widgets.append(fwidgets.RadioInput(self.name, self.value, self.attrs.copy(), choice, i))
         return widgets
@@ -36,7 +40,7 @@ class RadioFieldRenderer(fwidgets.RadioFieldRenderer):
             yield WidgetContainer(*self._get_widgets(choice, i))
 
     def __getitem__(self, idx):
-        choice = self.choices[idx] # Let the IndexError propogate
+        choice = self.choices[idx]  # Let the IndexError propogate
         return WidgetContainer(*self._get_widgets(choice, idx))
 
 
@@ -50,13 +54,13 @@ class ContestRadioSelect(forms.RadioSelect):
             value, text = value
         if value is None:
             value = ''
-        value = force_unicode(value) # Normalize to string.
+        value = force_unicode(value)  # Normalize to string.
         final_attrs = self.build_attrs(attrs)
         choices = list(chain(self.choices, choices))
         if is_tuple:
             if text is None:
                 text = ''
-            text = force_unicode(text) # Normalize to string.
+            text = force_unicode(text)  # Normalize to string.
             value = (value, text)
         return self.renderer(name, value, final_attrs, choices)
 

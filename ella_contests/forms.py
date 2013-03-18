@@ -1,5 +1,6 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
+from django import template
 
 from ella.core.cache import get_cached_object
 
@@ -7,12 +8,19 @@ from ella_contests.storages import storage
 from ella_contests.models import Contestant, Answer, Choice
 from ella_contests.fields import ContestChoiceField
 
+from ella_contests.conf import contests_settings
+
 
 def QuestionForm(question):
+    def use_render(text):
+        if contests_settings.RENDER_CHOICES:
+            template_name = 'render-contests-choice'
+            return template.Template(text, name=template_name).render(template.Context({}))
+        return text
     #TODO: use own Choice field that control
     #if objects exits as ModelChoiceField in to_python method
     choice_field = ContestChoiceField(
-            choices=[(c.pk, c.choice, c.inserted_by_user) for c in question.choices],
+            choices=[(c.pk, use_render(c.choice), c.inserted_by_user) for c in question.choices],
             required=True if question.is_required else False
     )
 
@@ -50,9 +58,11 @@ class ContestantForm(forms.ModelForm):
                 if ch_pk:
                     if isinstance(ch_pk, (tuple, list)):
                         ch_pk, ans = ch_pk
+                        if not q.is_required and not ans.strip():
+                            continue
                         data = dict(contestant=contestant,
                                     choice=get_cached_object(Choice, pk=ch_pk),
-                                    answer=ans)
+                                    answer=ans.strip())
                     else:
                         data = dict(contestant=contestant,
                                     choice=get_cached_object(Choice, pk=ch_pk))

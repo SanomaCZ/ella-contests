@@ -1,5 +1,9 @@
-from django.conf import settings
 from django.utils import simplejson
+from django.core.exceptions import ImproperlyConfigured
+
+from ella.utils import import_module_member
+
+from ella_contests.conf import contests_settings
 
 
 class BaseStorage(object):
@@ -29,8 +33,8 @@ class BaseStorage(object):
 class CookieStorage(BaseStorage):
     cookie_name_step = 'contest_%s_step_%s'
     cookie_name_last_step = 'contest_%s_last_step'
-    cookie_domain = settings.SESSION_COOKIE_DOMAIN
-    cookie_max_age = 86400 * 31
+    cookie_domain = contests_settings.COOKIE_DOMAIN
+    cookie_max_age = contests_settings.COOKIE_MAX_AGE
 
     def _get_cookie_name_step(self, contest, step):
         return self.cookie_name_step % (contest.pk, step)
@@ -84,4 +88,10 @@ class CookieStorage(BaseStorage):
                                    domain=self.cookie_domain)
 
 
-storage = CookieStorage()
+def get_storage_class():
+    class_storage = import_module_member(contests_settings.FORM_STEPS_STORAGE, 'form steps storage')
+    if not issubclass(class_storage, BaseStorage):
+        ImproperlyConfigured('Error importing storage class "%s" becouse it is not subclass of "%s"' % (class_storage, BaseStorage))
+    return class_storage
+
+storage = get_storage_class()()

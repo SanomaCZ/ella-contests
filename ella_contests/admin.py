@@ -10,7 +10,6 @@ class QuestionInlineAdmin(admin.TabularInline):
     model = Question
     raw_id_fields = ('photo',)
     extra = 1
-    #fieldsets = ((None, {'fields': ('category', 'publish_from', 'publish_to', 'commercial',)}),)
 
 
 class ContestAdmin(PublishableAdmin):
@@ -23,7 +22,24 @@ class ContestAdmin(PublishableAdmin):
         (_("Publication"), {'fields': (('publish_from', 'publish_to'), 'published', 'static')}),
         (_("Active"), {'fields': ('active_from', 'active_till')}),
     )
+    list_display = PublishableAdmin.list_display + ('active_from', 'state', 'contestants_count',)
     inlines = [ListingInlineAdmin, RelatedInlineAdmin, QuestionInlineAdmin]
+
+    def contestants_count(self, obj):
+        if obj.is_not_yet_active:
+            return 0
+        else:
+            return obj.__class__.objects.count()
+    contestants_count.short_description = _('count of contestants')
+
+    def state(self, obj):
+        if obj.is_not_yet_active:
+            return u"%s" % _('Is not yet active')
+        elif obj.is_closed:
+            return u"%s" % _('Is closed')
+        else:
+            return u"%s" % _('Is active now')
+    state.short_description = _('State')
 
 
 admin.site.register(Contest, ContestAdmin)

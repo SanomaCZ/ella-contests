@@ -1,9 +1,9 @@
-from django.db import models, connection
+from django.db import models, connection, IntegrityError
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
-from django.conf import settings
 #from django.utils.safestring import mark_safe
 #from django.contrib.auth.models import User
 
@@ -12,17 +12,13 @@ from ella.photos.models import Photo
 from ella.core.cache import CachedForeignKey, cache_this, get_cached_object
 from ella.core.custom_urls import resolver
 
+from ella_contests.conf import contests_settings
 
 try:
     from django.utils.timezone import now
 except ImportError:
     from datetime import datetime
     now = datetime.now
-
-AUTH_USER_MODEL = getattr(settings, "AUTH_USER_MODEL", "auth.User")
-
-QUESTIONS_CACHE_KEY_PATTERN = 'ella_contests_contest_questions:%s'
-CHOICES_CACHE_KEY_PATTERN = 'ella_contests_contest_choices:%s'
 
 
 class Contest(Publishable):
@@ -37,7 +33,7 @@ class Contest(Publishable):
         ordering = ('-active_from',)
 
     @property
-    @cache_this(lambda q: QUESTIONS_CACHE_KEY_PATTERN % q.pk)
+    @cache_this(lambda q: contests_settings.QUESTIONS_CACHE_KEY_PATTERN % q.pk)
     def questions(self):
         return list(Question.objects.filter(contest=self).order_by('order'))
 
@@ -113,7 +109,6 @@ class Question(models.Model):
     is_required = models.BooleanField(_('Is required'), default=True)
 
     def __unicode__(self):
-        #TODO: use contest in this too
         return u'%s - %s %d' % (self.contest if self.contest_id else 'Contest',
                                 _('Question'),
                                 self.order)
@@ -124,7 +119,7 @@ class Question(models.Model):
         unique_together = (('contest', 'order', ),)
 
     @property
-    @cache_this(lambda q: CHOICES_CACHE_KEY_PATTERN % q.pk)
+    @cache_this(lambda q: contests_settings.CHOICES_CACHE_KEY_PATTERN % q.pk)
     def choices(self):
         return list(Choice.objects.filter(question=self))
 
@@ -156,16 +151,35 @@ class Choice(models.Model):
     question = CachedForeignKey(Question, verbose_name=_('Question'))
     choice = models.TextField(_('Choice text'))
     is_correct = models.BooleanField(_('Is correct'), default=False)
-    inserted_by_user = models.BooleanField(_('Inserted by user'), default=False)
-    #TODO: add check that is_correct is only one choice per question
+    inserted_by_user = models.BooleanField(_('Answare inserted by user'), default=False)
 
     def __unicode__(self):
-        #TODO: use render in widget instead unicode or change all
         return u'%s: choice pk(%d)' % (self.question if self.question_id else 'Choice', self.pk)
 
     class Meta:
         verbose_name = _('Choice')
         verbose_name_plural = _('Choices')
+
+    def clean(self):
+        #check that correct is only one choice per question
+        if self.question_id and self.is_correct:
+            try:
+                if not self.pk:
+                    if self.__class__.objects.get(question=self.question, is_correct=True).pk != self.pk:
+                        raise ValidationError(_("Only one correct choice is allowed per question"))
+                else:
+                    self.__class__.objects.exclude(pk=self.pk).get(question=self.question, is_correct=True)
+                    raise ValidationError(_("Only one correct choice is allowed per question"))
+            except Choice.DoesNotExist:
+                pass
+
+    def save(self, *args, **kwargs):
+        try:
+            self.clean()
+        except ValidationError, e:
+            raise IntegrityError(e.messages)
+
+        super(Choice, self).save(*args, **kwargs)
 
 
 class Contestant(models.Model):
@@ -173,12 +187,14 @@ class Contestant(models.Model):
     Contestant info.
     """
     contest = CachedForeignKey(Contest, verbose_name=_('Contest'))
-    user = CachedForeignKey(AUTH_USER_MODEL, null=True, blank=True, verbose_name=_('User'))
+    user = CachedForeignKey(contests_settings.AUTH_USER_MODEL,
+                            null=True, blank=True, verbose_name=_('User'))
     name = models.CharField(_('First name'), max_length=50)
     surname = models.CharField(_('Last name'), max_length=50)
     email = models.EmailField(_('email'))
     phone_number = models.CharField(_('Phone number'), max_length=20, blank=True)
     address = models.CharField(_('Address'), max_length=200, blank=True)
+    #FIXME: should be null=True, blank True ?
     count_guess = models.IntegerField(_('Count guess'))
     winner = models.BooleanField(_('Winner'), default=False)
     created = models.DateTimeField(editable=False)
@@ -231,11 +247,11 @@ class Answer(models.Model):
 @receiver(post_save, sender=Question)
 def invalidate_question_cache(sender, instance, **kwargs):
     if getattr(instance, 'contest_id', None):
-        cache.delete(QUESTIONS_CACHE_KEY_PATTERN % instance.contest_id)
+        cache.delete(contests_settings.QUESTIONS_CACHE_KEY_PATTERN % instance.contest_id)
 
 
 @receiver(post_delete, sender=Choice)
 @receiver(post_save, sender=Choice)
 def invalidate_choices_cache(sender, instance, **kwargs):
     if getattr(instance, 'question_id', None):
-        cache.delete(CHOICES_CACHE_KEY_PATTERN % instance.question_id)
+        cache.delete(contests_settings.CHOICES_CACHE_KEY_PATTERN % instance.question_id)
