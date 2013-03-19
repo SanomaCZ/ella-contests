@@ -102,7 +102,7 @@ class Contest(Publishable):
 
 class Question(models.Model):
     contest = CachedForeignKey(Contest, related_name='question_qs')
-    order = models.PositiveIntegerField()
+    order = models.PositiveIntegerField(_('Order'))
     photo = CachedForeignKey(Photo, blank=True, null=True, on_delete=models.SET_NULL)
     text = models.TextField()
     is_required = models.BooleanField(_('Is required'), default=True)
@@ -115,12 +115,13 @@ class Question(models.Model):
     class Meta:
         verbose_name = _('Question')
         verbose_name_plural = _('Questions')
+        ordering = ('order',)
         unique_together = (('contest', 'order', ),)
 
     @property
     @cache_this(lambda q: contests_settings.CHOICES_CACHE_KEY_PATTERN % q.pk)
     def choices(self):
-        return list(Choice.objects.filter(question=self))
+        return list(Choice.objects.filter(question=self).order_by('order'))
 
     def get_absolute_url(self):
         return resolver.reverse(self.contest, 'ella-contests-contests-detail', question_number=self.position)
@@ -149,15 +150,18 @@ class Question(models.Model):
 class Choice(models.Model):
     question = CachedForeignKey(Question, verbose_name=_('Question'))
     choice = models.TextField(_('Choice text'))
+    order = models.PositiveIntegerField(_('Order'))
     is_correct = models.BooleanField(_('Is correct'), default=False)
     inserted_by_user = models.BooleanField(_('Answare inserted by user'), default=False)
 
     def __unicode__(self):
-        return u'%s: choice pk(%d)' % (self.question if self.question_id else 'Choice', self.pk)
+        return u'%s: choice (%d)' % (self.question if self.question_id else 'Choice', self.order)
 
     class Meta:
         verbose_name = _('Choice')
         verbose_name_plural = _('Choices')
+        ordering = ('order',)
+        unique_together = (('question', 'order', ),)
 
     def clean(self):
         #check that correct is only one choice per question
@@ -193,8 +197,7 @@ class Contestant(models.Model):
     email = models.EmailField(_('email'))
     phone_number = models.CharField(_('Phone number'), max_length=20, blank=True)
     address = models.CharField(_('Address'), max_length=200, blank=True)
-    #FIXME: should be null=True, blank True ?
-    count_guess = models.IntegerField(_('Count guess'))
+    count_guess = models.IntegerField(_('Count guess'), default=0, blank=True)
     winner = models.BooleanField(_('Winner'), default=False)
     created = models.DateTimeField(editable=False)
 
