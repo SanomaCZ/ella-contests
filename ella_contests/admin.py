@@ -1,4 +1,10 @@
+import csv
+import itertools
+from datetime import datetime
+
 from django.contrib import admin
+from django.http import HttpResponse
+from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext_lazy as _
 
 from ella.core.cache import cache_this
@@ -30,6 +36,7 @@ class ContestAdmin(PublishableAdmin):
                                                     'contestants_all_correct_answers_count',
                                                     )
     inlines = [ListingInlineAdmin, RelatedInlineAdmin, QuestionInlineAdmin]
+    actions = PublishableAdmin.actions + ['results_to_csv']
 
     def contestants_count(self, obj):
         if obj.is_not_yet_active:
@@ -63,6 +70,49 @@ class ContestAdmin(PublishableAdmin):
         else:
             return u"%s" % _('Is active now')
     state.short_description = _('State')
+
+    def results_to_csv(self, request, queryset):
+        def encode_item(item):
+            return unicode(item).encode("utf-8", "replace")
+
+        if queryset.count() != 1:
+            self.message_user(request, _("I can not return results for multiple contests at once"))
+        else:
+            obj = queryset[0]
+            obj_slug = slugify(obj.title)
+            qs = Contestant.objects.filter(contest=obj)
+            response = HttpResponse(mimetype='text/csv')
+            response['Content-Disposition'] = 'attachment; filename=%s_%s.csv' % (obj_slug[:50],
+                                                                                  datetime.now().strftime("%y_%m_%d_%H_%M"))
+            all_required_questions = Question.objects.filter(contest=obj, is_required=True).count()
+            writer = csv.writer(response)
+            head = [
+                    encode_item(_('First name')),
+                    encode_item(_('Last name')),
+                    encode_item(_('email')),
+                    encode_item(_('Phone number')),
+                    encode_item(_('Address')),
+                    encode_item(_('Created')),
+                    encode_item(_('Count of right answers')),
+                    encode_item(_('Count of all possible right answers')),
+                    encode_item(_('The following columns are of the form - order of question: answer')),
+                    ]
+            writer.writerow(list(head))
+            for obj in qs:
+                row = [
+                       encode_item(obj.name),
+                       encode_item(obj.surname),
+                       encode_item(obj.email),
+                       encode_item(obj.phone_number),
+                       encode_item(obj.address),
+                       encode_item(obj.created),
+                       encode_item(obj.my_right_answers.count()),
+                       encode_item(all_required_questions),
+                       ]
+                row = itertools.chain(row, [encode_item(u"%s: %s" % (ans.choice.question.order, ans.answer)) for ans in obj.get_my_text_answers()])
+                writer.writerow(list(row))
+            return response
+    results_to_csv.short_description = _("Results")
 
 
 class ChoiceAdmin(admin.ModelAdmin):
