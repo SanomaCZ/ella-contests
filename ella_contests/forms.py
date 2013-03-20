@@ -72,8 +72,8 @@ class ContestantForm(forms.ModelForm):
     def _questions_valid(self):
         qforms = []
         forms_are_valid = True
-        for i, question in enumerate(self.contest.questions, start=1):
-            data = storage.get_data(self.contest, i, self.request)
+        for question in self.contest.questions:
+            data = storage.get_data(self.contest, question.pk, self.request)
             form = QuestionForm(question)(data)
             if data is None or not form.is_valid():
                 forms_are_valid = False

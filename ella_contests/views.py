@@ -66,7 +66,7 @@ class ContestDetailFormView(ContestBaseView):
         return QuestionForm(self.question)
 
     def get_initial(self):
-        data = storage.get_data(self.contest, self.current_page, self.request)
+        data = storage.get_data(self.contest, self.question.pk, self.request)
         #FIXME: data may be None but what form needed?
         return data
 
@@ -79,7 +79,7 @@ class ContestDetailFormView(ContestBaseView):
         if not self.contest.is_active:
             return self.form_invalid(form)
         response = super(ContestDetailFormView, self).form_valid(form)
-        storage.set_data(self.contest, self.current_page, form.cleaned_data, response)
+        storage.set_data(self.contest, self.question.pk, form.cleaned_data, response)
         storage.set_last_step(self.contest, self.current_page, response)
         return response
 
