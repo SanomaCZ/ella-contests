@@ -35,7 +35,7 @@ class Contest(Publishable):
     @property
     @cache_this(lambda q: contests_settings.QUESTIONS_CACHE_KEY_PATTERN % q.pk)
     def questions(self):
-        return list(Question.objects.filter(contest=self).order_by('order'))
+        return list(self.question_set.order_by('order'))
 
     def __getitem__(self, key):
         return self.questions[key]
@@ -46,7 +46,7 @@ class Contest(Publishable):
 
     @property
     def right_choices(self):
-        qqs = Question.objects.filter(contest=self, is_required=True)
+        qqs = self.question_set.filter(is_required=True).only('pk')
         return Choice.objects.filter(question__id__in=qqs, is_correct=True)
 
     @property
@@ -105,7 +105,7 @@ class Question(models.Model):
     order = models.PositiveIntegerField(_('Order'))
     photo = CachedForeignKey(Photo, blank=True, null=True, on_delete=models.SET_NULL)
     text = models.TextField()
-    is_required = models.BooleanField(_('Is required'), default=True)
+    is_required = models.BooleanField(_('Is required'), default=True, db_index=True)
 
     def __unicode__(self):
         return u'%s - %s %d' % (self.contest if self.contest_id else 'Contest',
@@ -151,7 +151,7 @@ class Choice(models.Model):
     question = CachedForeignKey(Question, verbose_name=_('Question'))
     choice = models.TextField(_('Choice text'))
     order = models.PositiveIntegerField(_('Order'))
-    is_correct = models.BooleanField(_('Is correct'), default=False)
+    is_correct = models.BooleanField(_('Is correct'), default=False, db_index=True)
     inserted_by_user = models.BooleanField(_('Answare inserted by user'), default=False)
 
     def __unicode__(self):
