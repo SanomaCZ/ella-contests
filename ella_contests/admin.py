@@ -106,7 +106,7 @@ class ContestAdmin(PublishableAdmin):
                        encode_item(obj.email),
                        encode_item(obj.phone_number),
                        encode_item(obj.address),
-                       encode_item(obj.created),
+                       encode_item(obj.created.strftime("%d.%m.%Y %H:%M:%S")),
                        encode_item(obj.my_right_answers.count()),
                        encode_item(all_required_questions),
                        ]

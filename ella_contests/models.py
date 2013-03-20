@@ -35,7 +35,7 @@ class Contest(Publishable):
     @property
     @cache_this(lambda q: contests_settings.QUESTIONS_CACHE_KEY_PATTERN % q.pk)
     def questions(self):
-        return list(self.question_set.order_by('order'))
+        return list(self.question_qs.order_by('order'))
 
     def __getitem__(self, key):
         return self.questions[key]
@@ -46,7 +46,7 @@ class Contest(Publishable):
 
     @property
     def right_choices(self):
-        qqs = self.question_set.filter(is_required=True).only('pk')
+        qqs = self.question_qs.filter(is_required=True).only('pk')
         return Choice.objects.filter(question__id__in=qqs, is_correct=True)
 
     @property
