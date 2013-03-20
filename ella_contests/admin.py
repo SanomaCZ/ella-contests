@@ -95,8 +95,9 @@ class ContestAdmin(PublishableAdmin):
                     encode_item(_('Created')),
                     encode_item(_('Count of right answers')),
                     encode_item(_('Count of all possible right answers')),
-                    encode_item(_('The following columns are of the form - order of question: answer')),
                     ]
+            all_questions = obj.questions
+            head = itertools.chain(head, [encode_item("q %s (%s)" % (q.order, q.choice_set.get(is_correct=True).order)) for q in all_questions])
             writer.writerow(list(head))
             for obj in qs:
                 row = [
@@ -109,7 +110,19 @@ class ContestAdmin(PublishableAdmin):
                        encode_item(obj.my_right_answers.count()),
                        encode_item(all_required_questions),
                        ]
-                row = itertools.chain(row, [encode_item(u"%s: %s" % (ans.choice.question.order, ans.answer)) for ans in obj.get_my_text_answers()])
+                answers_dict = dict([(a.choice.question_id, (a.answer, a.choice)) for a in obj.answer_set.all()])
+                answers = []
+                for q in all_questions:
+                    try:
+                        a, ch = answers_dict[q.pk]
+                    except KeyError:
+                        answers.append(encode_item(u""))
+                    else:
+                        if ch.inserted_by_user:
+                            answers.append(encode_item(a))
+                        else:
+                            answers.append(encode_item(ch.order))
+                row = itertools.chain(row, answers)
                 writer.writerow(list(row))
             return response
     results_to_csv.short_description = _("Results")
