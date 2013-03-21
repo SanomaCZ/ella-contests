@@ -102,8 +102,9 @@ class Contest(Publishable):
 
 class Question(models.Model):
     contest = CachedForeignKey(Contest, verbose_name=_('Contest'))
-    order = models.PositiveIntegerField(_('Order'))
-    photo = CachedForeignKey(Photo, blank=True, null=True, on_delete=models.SET_NULL)
+    order = models.PositiveIntegerField(_('Order'), db_index=True)
+    photo = CachedForeignKey(Photo, blank=True, null=True, verbose_name=_('Photo'),
+                             on_delete=models.SET_NULL)
     text = models.TextField()
     is_required = models.BooleanField(_('Is required'), default=True, db_index=True)
 
@@ -150,7 +151,7 @@ class Question(models.Model):
 class Choice(models.Model):
     question = CachedForeignKey(Question, verbose_name=_('Question'))
     choice = models.TextField(_('Choice text'))
-    order = models.PositiveIntegerField(_('Order'))
+    order = models.PositiveIntegerField(_('Order'), db_index=True)
     is_correct = models.BooleanField(_('Is correct'), default=False, db_index=True)
     inserted_by_user = models.BooleanField(_('Answare inserted by user'), default=False)
 
@@ -199,7 +200,7 @@ class Contestant(models.Model):
     address = models.CharField(_('Address'), max_length=200, blank=True)
     count_guess = models.IntegerField(_('Count guess'), default=0, blank=True)
     winner = models.BooleanField(_('Winner'), default=False)
-    created = models.DateTimeField(editable=False)
+    created = models.DateTimeField(_('Created'), editable=False)
 
     class Meta:
         verbose_name = _('Contestant')

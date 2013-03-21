@@ -19,6 +19,11 @@ class QuestionInlineAdmin(admin.TabularInline):
     extra = 1
 
 
+class ChoiceInlineAdmin(admin.TabularInline):
+    model = Choice
+    extra = 1
+
+
 class ContestAdmin(PublishableAdmin):
     ordering = ('-publish_from',)
     raw_id_fields = ('photo', 'source', 'authors')
@@ -140,6 +145,7 @@ class QuestionAdmin(admin.ModelAdmin):
     list_filter = ('contest__title', 'is_required',)
     search_fields = ('contest__title',)
     raw_id_fields = ('contest', 'photo',)
+    inlines = [ChoiceInlineAdmin]
 
     def has_set_correct_choice(self, obj):
         if Choice.objects.filter(question=obj, is_correct=True).exists():
