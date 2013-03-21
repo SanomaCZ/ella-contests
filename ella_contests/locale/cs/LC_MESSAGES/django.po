@@ -1,0 +1,251 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-03-21 16:16+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2\n"
+
+#: admin.py:31
+msgid "Article heading"
+msgstr ""
+
+#: admin.py:32
+msgid "Article contents"
+msgstr ""
+
+#: admin.py:33
+msgid "Metadata"
+msgstr ""
+
+#: admin.py:34
+msgid "Publication"
+msgstr ""
+
+#: admin.py:35
+msgid "Active"
+msgstr "Aktivní"
+
+#: admin.py:51
+msgid "count of contestants"
+msgstr "počet soutěžících"
+
+#: admin.py:55
+msgid "count of questions"
+msgstr "počet otázek"
+
+#: admin.py:62
+msgid "contestants (all correct answers)"
+msgstr "soutěžící (všechny správné odpovědi)"
+
+#: admin.py:68
+msgid "contestants (at least one correct answer)"
+msgstr "soutěžící (alespoň jedna správná odpověď)"
+
+#: admin.py:72
+msgid "Is not yet active"
+msgstr "Ještě není aktivní"
+
+#: admin.py:74
+msgid "Is closed"
+msgstr "Je již skončená"
+
+#: admin.py:76
+msgid "Is active now"
+msgstr "Je aktivní"
+
+#: admin.py:77
+msgid "State"
+msgstr "Stav"
+
+#: admin.py:84
+msgid "I can not return results for multiple contests at once"
+msgstr "Nemohu vrátit výsledky pro více soutěží najednou"
+
+#: admin.py:95 models.py:196
+msgid "First name"
+msgstr "Křestní jméno"
+
+#: admin.py:96 models.py:197
+msgid "Last name"
+msgstr "Příjmení"
+
+#: admin.py:97 models.py:198
+msgid "email"
+msgstr "email"
+
+#: admin.py:98 models.py:199
+msgid "Phone number"
+msgstr "Telefonní číslo"
+
+#: admin.py:99 models.py:200
+msgid "Address"
+msgstr "Adresa"
+
+#: admin.py:100 models.py:203
+msgid "Created"
+msgstr ""
+
+#: admin.py:101
+msgid "Count of right answers"
+msgstr "Počet správných odpovědí"
+
+#: admin.py:102
+msgid "Count of all possible right answers"
+msgstr "Počet všech možných správných odpovědí"
+
+#: admin.py:133
+msgid "Results"
+msgstr "Výsledky"
+
+#: admin.py:152
+msgid "Yes"
+msgstr ""
+
+#: admin.py:154
+msgid "No"
+msgstr ""
+
+#: admin.py:155
+msgid "Has set correct choice"
+msgstr "Má nastavenou odpověď jako správnou"
+
+#: forms.py:86
+msgid "Your email is not unique, you probably competed"
+msgstr "Váš email není unikátní, pravděpodobně jste již hlasoval/a"
+
+#: forms.py:88
+msgid "Some of the questions are filled incorrect"
+msgstr "Některé z otázek nejsou vyplněny, nebo jsou vyplněny chybně"
+
+#: models.py:25
+msgid "Text"
+msgstr ""
+
+#: models.py:26
+msgid "Text with results"
+msgstr "Text s výsledky"
+
+#: models.py:27
+msgid "Active from"
+msgstr "Aktivní od"
+
+#: models.py:28
+msgid "Active till"
+msgstr "Aktivní do"
+
+#: models.py:31 models.py:104 models.py:193
+msgid "Contest"
+msgstr "Soutěž"
+
+#: models.py:32
+msgid "Contests"
+msgstr "Soutěže"
+
+#: models.py:105 models.py:154
+msgid "Order"
+msgstr "Pořadí"
+
+#: models.py:106
+msgid "Photo"
+msgstr "Fotografie"
+
+#: models.py:109
+msgid "Is required"
+msgstr "Je povinná"
+
+#: models.py:113 models.py:117 models.py:152
+msgid "Question"
+msgstr "Otázka"
+
+#: models.py:118
+msgid "Questions"
+msgstr "Otázky"
+
+#: models.py:153
+msgid "Choice text"
+msgstr "text volby"
+
+#: models.py:155
+msgid "Is correct"
+msgstr "Je správná"
+
+#: models.py:156
+msgid "Answare inserted by user"
+msgstr "Odpověd zadává uživatel"
+
+#: models.py:162 models.py:230
+msgid "Choice"
+msgstr "Volba"
+
+#: models.py:163
+msgid "Choices"
+msgstr "Volby"
+
+#: models.py:173 models.py:176
+msgid "Only one correct choice is allowed per question"
+msgstr "Může být jen jedna správná odpověď pro jednu otázku"
+
+#: models.py:195
+msgid "User"
+msgstr ""
+
+#: models.py:201
+msgid "Count guess"
+msgstr "Počet soutěžících"
+
+#: models.py:202
+msgid "Winner"
+msgstr "Vítěz"
+
+#: models.py:206 models.py:229
+msgid "Contestant"
+msgstr "Soutěžící"
+
+#: models.py:207
+msgid "Contestants"
+msgstr "Soutěžící"
+
+#: models.py:231
+msgid "Answer text"
+msgstr "text odpovědi"
+
+#: models.py:238
+msgid "Answer"
+msgstr "Odpověď"
+
+#: models.py:239
+msgid "Answers"
+msgstr "Odpověďi"
+
+#: urls.py:14
+msgid "contestant"
+msgstr "soutěžící"
+
+#: urls.py:15
+msgid "result"
+msgstr "výsledek"
+
+#: urls.py:16
+msgid "conditions"
+msgstr "podmínky"
+
+#: urls.py:17
+msgid "question"
+msgstr "otázka"
+
+#: views.py:40
+msgid "There is no such question in this contest."
+msgstr "Soutěž nemá tuto otázku"
