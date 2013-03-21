@@ -17,8 +17,6 @@ def QuestionForm(question):
             template_name = 'render-contests-choice'
             return template.Template(text, name=template_name).render(template.Context({}))
         return text
-    #TODO: use own Choice field that control
-    #if objects exits as ModelChoiceField in to_python method
     choice_field = ContestChoiceField(
             choices=[(c.pk, use_render(c.choice), c.inserted_by_user) for c in question.choices],
             required=True if question.is_required else False
@@ -46,7 +44,6 @@ class ContestantForm(forms.ModelForm):
         super(ContestantForm, self).__init__(*args, **kwargs)
 
     def save(self, commit=True):
-        #TODO: get logic for count choices
         contestant = super(ContestantForm, self).save(commit=False)
         contestant.contest = self.contest
         if self.request.user.is_authenticated():

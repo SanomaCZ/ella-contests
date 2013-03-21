@@ -67,7 +67,6 @@ class ContestDetailFormView(ContestBaseView):
 
     def get_initial(self):
         data = storage.get_data(self.contest, self.question.pk, self.request)
-        #FIXME: data may be None but what form needed?
         return data
 
     def get_success_url(self):
@@ -97,7 +96,7 @@ class ContestDetailFormView(ContestBaseView):
     def dispatch(self, request, context, *args, **kwargs):
         self.context = context
         self.kwargs = kwargs
-        #TODO: add check if user can see this step else redirect
+        #check if user can see this step else redirect
         last_step = storage.get_last_step(self.contest, request)
         if last_step is None:
             if self.current_page == 1:
