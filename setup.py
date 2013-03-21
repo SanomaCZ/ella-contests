@@ -26,7 +26,7 @@ setup(
 
     packages=find_packages(
         where='.',
-        exclude=('doc', 'tests',)
+        exclude=('doc', 'test_ella_contests',)
     ),
 
     include_package_data=True,
@@ -46,6 +46,7 @@ setup(
     ],
     install_requires=install_requires,
 
-    test_suite='nose.collector',
+
+    test_suite='test_ella_contests.run_tests.run_all',
     tests_require=tests_require,
 )

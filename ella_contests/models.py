@@ -35,7 +35,7 @@ class Contest(Publishable):
     @property
     @cache_this(lambda q: contests_settings.QUESTIONS_CACHE_KEY_PATTERN % q.pk)
     def questions(self):
-        return list(self.question_qs.order_by('order'))
+        return list(self.question_set.order_by('order'))
 
     def __getitem__(self, key):
         return self.questions[key]
@@ -46,7 +46,7 @@ class Contest(Publishable):
 
     @property
     def right_choices(self):
-        qqs = self.question_qs.filter(is_required=True).only('pk')
+        qqs = self.question_set.filter(is_required=True).only('pk')
         return Choice.objects.filter(question__id__in=qqs, is_correct=True)
 
     @property
@@ -101,7 +101,7 @@ class Contest(Publishable):
 
 
 class Question(models.Model):
-    contest = CachedForeignKey(Contest, related_name='question_qs')
+    contest = CachedForeignKey(Contest, verbose_name=_('Contest'))
     order = models.PositiveIntegerField(_('Order'))
     photo = CachedForeignKey(Photo, blank=True, null=True, on_delete=models.SET_NULL)
     text = models.TextField()
@@ -129,7 +129,7 @@ class Question(models.Model):
     @property
     def position(self):
         if not hasattr(self, '_position'):
-            self._position = self.contest.question_qs.filter(order__lte=self.order).count()
+            self._position = self.contest.question_set.filter(order__lte=self.order).count()
         return self._position
 
     @property
