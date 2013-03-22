@@ -57,7 +57,7 @@ class ContestAdmin(PublishableAdmin):
     @cache_this(lambda adm, c: "ella_contests_admin_all_correct_answers_count_%s" % c.pk,
                 timeout=60 * 60)
     def contestants_all_correct_answers_count(self, obj):
-        all_required_questions = Question.objects.filter(contest=obj, is_required=True).count()
+        all_required_questions = obj.question_set.filter(is_required=True).count()
         return obj.get_contestants_with_correct_answer().filter(answers_count=all_required_questions).count()
     contestants_all_correct_answers_count.short_description = _('contestants (all correct answers)')
 
@@ -85,11 +85,10 @@ class ContestAdmin(PublishableAdmin):
         else:
             obj = queryset[0]
             obj_slug = slugify(obj.title)
-            qs = Contestant.objects.filter(contest=obj)
             response = HttpResponse(mimetype='text/csv')
             response['Content-Disposition'] = 'attachment; filename=%s_%s.csv' % (obj_slug[:50],
                                                                                   datetime.now().strftime("%y_%m_%d_%H_%M"))
-            all_required_questions = Question.objects.filter(contest=obj, is_required=True).count()
+            all_required_questions = obj.question_set.filter(is_required=True).count()
             writer = csv.writer(response)
             head = [
                     encode_item(_('First name')),
@@ -104,7 +103,7 @@ class ContestAdmin(PublishableAdmin):
             all_questions = obj.questions
             head = itertools.chain(head, [encode_item("q %s (%s)" % (q.order, q.choice_set.get(is_correct=True).order)) for q in all_questions])
             writer.writerow(list(head))
-            for obj in qs:
+            for obj in obj.contestant_set.all():
                 row = [
                        encode_item(obj.name),
                        encode_item(obj.surname),

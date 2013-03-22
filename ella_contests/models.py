@@ -116,7 +116,7 @@ class Question(models.Model):
     @property
     @cache_this(lambda q: contests_settings.CHOICES_CACHE_KEY_PATTERN % q.pk)
     def choices(self):
-        return list(Choice.objects.filter(question=self).order_by('order'))
+        return list(self.choice_set.order_by('order'))
 
     def get_absolute_url(self):
         return resolver.reverse(self.contest, 'ella-contests-contests-detail', question_number=self.position)
