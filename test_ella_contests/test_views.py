@@ -20,7 +20,23 @@ class TestContestUrls(ContestTestCase):
     def test_custom_url_for_questions_wizard(self):
         response = self.client.get(self.url + 'question/1/')
         tools.assert_equals(200, response.status_code)
+        response = self.client.get(self.url + 'question/2/')
+        tools.assert_equals(302, response.status_code)
+        response = self.client.get(self.url + 'question/3/')
+        tools.assert_equals(302, response.status_code)
+        response = self.client.get(self.url + 'question/0/')
+        tools.assert_equals(302, response.status_code)
+        response = self.client.get(self.url + 'question/4/')
+        tools.assert_equals(302, response.status_code)
 
     def test_detail_url_for_contest(self):
         response = self.client.get(self.url)
+        tools.assert_equals(200, response.status_code)
+
+    def test_rest_custom_url_for_contest(self):
+        response = self.client.get(self.url + 'contestant/')
+        tools.assert_equals(302, response.status_code)
+        response = self.client.get(self.url + 'result/')
+        tools.assert_equals(200, response.status_code)
+        response = self.client.get(self.url + 'conditions/')
         tools.assert_equals(200, response.status_code)

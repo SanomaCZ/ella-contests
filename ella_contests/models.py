@@ -4,8 +4,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
-#from django.utils.safestring import mark_safe
-#from django.contrib.auth.models import User
 
 from ella.core.models import Publishable
 from ella.photos.models import Photo
@@ -14,11 +12,7 @@ from ella.core.custom_urls import resolver
 
 from ella_contests.conf import contests_settings
 
-try:
-    from django.utils.timezone import now
-except ImportError:
-    from datetime import datetime
-    now = datetime.now
+from ella.utils.timezone import now
 
 
 class Contest(Publishable):
@@ -221,8 +215,7 @@ class Contestant(models.Model):
         return self.contest.right_answers.filter(contestant=self)
 
     def get_my_text_answers(self):
-        return Answer.objects.filter(choice__question__contest=self.contest,
-                                     contestant=self).exclude(choice__inserted_by_user=False)
+        return self.answer_set.exclude(choice__inserted_by_user=False)
 
 
 class Answer(models.Model):
