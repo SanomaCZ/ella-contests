@@ -101,34 +101,38 @@ class ContestAdmin(PublishableAdmin):
                     encode_item(_('Count of all possible right answers')),
                     ]
             all_questions = obj.questions
-            head = itertools.chain(head, [encode_item("q %s (%s)" % (q.order, q.choice_set.get(is_correct=True).order)) for q in all_questions])
-            writer.writerow(list(head))
-            for obj in obj.contestant_set.all():
-                row = [
-                       encode_item(obj.name),
-                       encode_item(obj.surname),
-                       encode_item(obj.email),
-                       encode_item(obj.phone_number),
-                       encode_item(obj.address),
-                       encode_item(obj.created.strftime("%d.%m.%Y %H:%M:%S")),
-                       encode_item(obj.my_right_answers.count()),
-                       encode_item(all_required_questions),
-                       ]
-                answers_dict = dict([(a.choice.question_id, (a.answer, a.choice)) for a in obj.answer_set.all()])
-                answers = []
-                for q in all_questions:
-                    try:
-                        a, ch = answers_dict[q.pk]
-                    except KeyError:
-                        answers.append(encode_item(u""))
-                    else:
-                        if ch.inserted_by_user:
-                            answers.append(encode_item(a))
+            try:
+                head = itertools.chain(head, [encode_item("q %s (%s)" % (q.order, q.choice_set.get(is_correct=True).order)) for q in all_questions])
+            except Choice.DoesNotExist:
+                self.message_user(request, _("I can not export data becouse of any questions has not set choice as correct"))
+            else:
+                writer.writerow(list(head))
+                for obj in obj.contestant_set.all():
+                    row = [
+                           encode_item(obj.name),
+                           encode_item(obj.surname),
+                           encode_item(obj.email),
+                           encode_item(obj.phone_number),
+                           encode_item(obj.address),
+                           encode_item(obj.created.strftime("%d.%m.%Y %H:%M:%S")),
+                           encode_item(obj.my_right_answers.count()),
+                           encode_item(all_required_questions),
+                           ]
+                    answers_dict = dict([(a.choice.question_id, (a.answer, a.choice)) for a in obj.answer_set.all()])
+                    answers = []
+                    for q in all_questions:
+                        try:
+                            a, ch = answers_dict[q.pk]
+                        except KeyError:
+                            answers.append(encode_item(u""))
                         else:
-                            answers.append(encode_item(ch.order))
-                row = itertools.chain(row, answers)
-                writer.writerow(list(row))
-            return response
+                            if ch.inserted_by_user:
+                                answers.append(encode_item(a))
+                            else:
+                                answers.append(encode_item(ch.order))
+                    row = itertools.chain(row, answers)
+                    writer.writerow(list(row))
+                return response
     results_to_csv.short_description = _("Results")
 
 
@@ -155,7 +159,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 
 class ContestantAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'email', 'created', 'count_guess')
+    list_display = ('__unicode__', 'email', 'created')
     list_filter = ('contest__title',)
     search_fields = ('contest__title',)
     raw_id_fields = ('contest', 'user',)

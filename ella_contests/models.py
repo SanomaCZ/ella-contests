@@ -190,9 +190,8 @@ class Contestant(models.Model):
     name = models.CharField(_('First name'), max_length=50)
     surname = models.CharField(_('Last name'), max_length=50)
     email = models.EmailField(_('email'))
+    address = models.CharField(_('Address'), max_length=200)
     phone_number = models.CharField(_('Phone number'), max_length=20, blank=True)
-    address = models.CharField(_('Address'), max_length=200, blank=True)
-    count_guess = models.IntegerField(_('Count guess'), default=0, blank=True)
     winner = models.BooleanField(_('Winner'), default=False)
     created = models.DateTimeField(_('Created'), editable=False)
 

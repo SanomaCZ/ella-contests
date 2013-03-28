@@ -116,8 +116,7 @@ class TestContestant(ContestTestCase):
             surname=u'Good',
             email=u'joe@joe.cz',
             phone_number='777777777',
-            address=u'XX street 123',
-            count_guess=2
+            address=u'XX street 123'
         )
         self.contestant2 = Contestant.objects.create(
             contest=self.contest,
