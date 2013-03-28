@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-03-21 16:16+0100\n"
+"POT-Creation-Date: 2013-03-28 11:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -74,51 +74,56 @@ msgstr "Stav"
 msgid "I can not return results for multiple contests at once"
 msgstr "Nemohu vrátit výsledky pro více soutěží najednou"
 
-#: admin.py:95 models.py:196
+#: admin.py:94 models.py:190
 msgid "First name"
 msgstr "Křestní jméno"
 
-#: admin.py:96 models.py:197
+#: admin.py:95 models.py:191
 msgid "Last name"
 msgstr "Příjmení"
 
-#: admin.py:97 models.py:198
+#: admin.py:96 models.py:192
 msgid "email"
 msgstr "email"
 
-#: admin.py:98 models.py:199
+#: admin.py:97 models.py:194
 msgid "Phone number"
 msgstr "Telefonní číslo"
 
-#: admin.py:99 models.py:200
+#: admin.py:98 models.py:193
 msgid "Address"
 msgstr "Adresa"
 
-#: admin.py:100 models.py:203
+#: admin.py:99 models.py:196
 msgid "Created"
 msgstr ""
 
-#: admin.py:101
+#: admin.py:100
 msgid "Count of right answers"
 msgstr "Počet správných odpovědí"
 
-#: admin.py:102
+#: admin.py:101
 msgid "Count of all possible right answers"
 msgstr "Počet všech možných správných odpovědí"
 
-#: admin.py:133
+#: admin.py:107
+msgid ""
+"I can not export data becouse of any questions has not set choice as correct"
+msgstr "Nemohu provést export, protože některá/é z otázek nemají označenou správnou odpověď"
+
+#: admin.py:136
 msgid "Results"
 msgstr "Výsledky"
 
-#: admin.py:152
+#: admin.py:155
 msgid "Yes"
 msgstr ""
 
-#: admin.py:154
+#: admin.py:157
 msgid "No"
 msgstr ""
 
-#: admin.py:155
+#: admin.py:158
 msgid "Has set correct choice"
 msgstr "Má nastavenou odpověď jako správnou"
 
@@ -130,103 +135,99 @@ msgstr "Váš email není unikátní, pravděpodobně jste již hlasoval/a"
 msgid "Some of the questions are filled incorrect"
 msgstr "Některé z otázek nejsou vyplněny, nebo jsou vyplněny chybně"
 
-#: models.py:25
+#: models.py:19
 msgid "Text"
 msgstr ""
 
-#: models.py:26
+#: models.py:20
 msgid "Text with results"
 msgstr "Text s výsledky"
 
-#: models.py:27
+#: models.py:21
 msgid "Active from"
 msgstr "Aktivní od"
 
-#: models.py:28
+#: models.py:22
 msgid "Active till"
 msgstr "Aktivní do"
 
-#: models.py:31 models.py:104 models.py:193
+#: models.py:25 models.py:98 models.py:187
 msgid "Contest"
 msgstr "Soutěž"
 
-#: models.py:32
+#: models.py:26
 msgid "Contests"
 msgstr "Soutěže"
 
-#: models.py:105 models.py:154
+#: models.py:99 models.py:148
 msgid "Order"
 msgstr "Pořadí"
 
-#: models.py:106
+#: models.py:100
 msgid "Photo"
 msgstr "Fotografie"
 
-#: models.py:109
+#: models.py:103
 msgid "Is required"
 msgstr "Je povinná"
 
-#: models.py:113 models.py:117 models.py:152
+#: models.py:107 models.py:111 models.py:146
 msgid "Question"
 msgstr "Otázka"
 
-#: models.py:118
+#: models.py:112
 msgid "Questions"
 msgstr "Otázky"
 
-#: models.py:153
+#: models.py:147
 msgid "Choice text"
 msgstr "text volby"
 
-#: models.py:155
+#: models.py:149
 msgid "Is correct"
 msgstr "Je správná"
 
-#: models.py:156
+#: models.py:150
 msgid "Answare inserted by user"
 msgstr "Odpověd zadává uživatel"
 
-#: models.py:162 models.py:230
+#: models.py:156 models.py:222
 msgid "Choice"
 msgstr "Volba"
 
-#: models.py:163
+#: models.py:157
 msgid "Choices"
 msgstr "Volby"
 
-#: models.py:173 models.py:176
+#: models.py:167 models.py:170
 msgid "Only one correct choice is allowed per question"
 msgstr "Může být jen jedna správná odpověď pro jednu otázku"
 
-#: models.py:195
+#: models.py:189
 msgid "User"
 msgstr ""
 
-#: models.py:201
-msgid "Count guess"
-msgstr "Počet soutěžících"
-
-#: models.py:202
+#: models.py:195
 msgid "Winner"
 msgstr "Vítěz"
 
-#: models.py:206 models.py:229
+#: models.py:199 models.py:221
 msgid "Contestant"
 msgstr "Soutěžící"
 
-#: models.py:207
+#: models.py:200
 msgid "Contestants"
 msgstr "Soutěžící"
 
-#: models.py:231
+#: models.py:223
 msgid "Answer text"
 msgstr "text odpovědi"
 
-#: models.py:238
+#: models.py:230
 msgid "Answer"
 msgstr "Odpověď"
 
-#: models.py:239
+#: models.py:231
 msgid "Answers"
 msgstr "Odpověďi"
 
@@ -249,3 +250,6 @@ msgstr "otázka"
 #: views.py:40
 msgid "There is no such question in this contest."
 msgstr "Soutěž nemá tuto otázku"
+
+#~ msgid "Count guess"
+#~ msgstr "Počet soutěžících"
