@@ -7,8 +7,8 @@ include dev_requirements.txt
 include requirements.txt
 recursive-include doc *
 recursive-include test_ella_contests *
-recursive-include ella_contests/*/locale *
-recursive-include ella_contests/*/templates *
+recursive-include ella_contests/locale *
+recursive-include ella_contests/templates *
 
 global-exclude .coverage
 exclude test_ella_contests/settings/local.py
