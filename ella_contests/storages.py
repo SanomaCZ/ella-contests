@@ -1,4 +1,4 @@
-from django.utils import simplejson
+import json
 from django.core.exceptions import ImproperlyConfigured
 
 from ella.utils import import_module_member
@@ -43,10 +43,10 @@ class CookieStorage(BaseStorage):
         return self.cookie_name_last_step % (contest.pk)
 
     def _data_to_json(self, data):
-        return simplejson.dumps(data)
+        return json.dumps(data)
 
     def _data_to_dict(self, str_data):
-        return simplejson.loads(str_data)
+        return json.loads(str_data)
 
     def set_data(self, contest, question, data, response, *args, **kwargs):
         response.set_cookie(
