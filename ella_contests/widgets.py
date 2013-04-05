@@ -2,6 +2,7 @@ from itertools import chain
 
 from django import forms
 from django.forms import widgets as fwidgets
+from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 
 
@@ -11,7 +12,7 @@ class WidgetContainer(object):
         self.widgets = widgets
 
     def __unicode__(self):
-        return " ".join(force_unicode(w) for w in self.widgets)
+        return mark_safe(u" ".join(force_unicode(w) for w in self.widgets))
 
 
 class RadioFieldRenderer(fwidgets.RadioFieldRenderer):
