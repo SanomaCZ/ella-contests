@@ -152,10 +152,11 @@ class QuestionAdmin(admin.ModelAdmin):
 
     def has_set_correct_choice(self, obj):
         if Choice.objects.filter(question=obj, is_correct=True).exists():
-            return u"%s" % _('Yes')
+            return True
         else:
-            return u"%s" % _('No')
+            return False
     has_set_correct_choice.short_description = _('Has set correct choice')
+    has_set_correct_choice.boolean = True
 
 
 class ContestantAdmin(admin.ModelAdmin):
