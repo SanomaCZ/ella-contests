@@ -29,7 +29,7 @@ class ContestAdmin(PublishableAdmin):
     raw_id_fields = ('photo', 'source', 'authors')
     fieldsets = (
         (_("Article heading"), {'fields': ('title', 'slug')}),
-        (_("Article contents"), {'fields': ('description', 'text', 'text_results')}),
+        (_("Article contents"), {'fields': ('description', 'text', 'text_results', 'text_announcement')}),
         (_("Metadata"), {'fields': ('category', 'authors', 'source', 'photo')}),
         (_("Publication"), {'fields': (('publish_from', 'publish_to'), 'published', 'static')}),
         (_("Active"), {'fields': ('active_from', 'active_till')}),

@@ -17,7 +17,8 @@ from ella.utils.timezone import now
 
 class Contest(Publishable):
     text = models.TextField(_('Text'))
-    text_results = models.TextField(_('Text with results'))
+    text_results = models.TextField(_('Text with results'), blank=True)
+    text_announcement = models.TextField(_('Text with announcement'), blank=True)
     active_from = models.DateTimeField(_('Active from'), blank=True, null=True)
     active_till = models.DateTimeField(_('Active till'), blank=True, null=True)
 
