@@ -29,7 +29,8 @@ class RadioFieldRenderer(fwidgets.RadioFieldRenderer):
             text_name = self.text_name_pattern % (self.name, choice[0])
             rw = fwidgets.RadioInput(self.name, value[0], self.attrs.copy(), choice, i)
             widgets.append(rw)
-            attrs = dict(onfocus='this.form.elements["%s"][%d].checked = true' % (self.name, i))
+            attrs = dict(onfocus="o=this.form.elements['%s'];o=(typeof o.length==='undefined')?o:o[%d];o.checked=true;"
+                                 % (self.name, i))
             widgets.append(fwidgets.TextInput().render(name=text_name, value=value[1], attrs=attrs))
         else:
             widgets.append(fwidgets.RadioInput(self.name, self.value, self.attrs.copy(), choice, i))
