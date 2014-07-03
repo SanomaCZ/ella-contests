@@ -27,13 +27,9 @@ class RadioFieldRenderer(fwidgets.RadioFieldRenderer):
         if choice[2]:
             value = self.value if isinstance(self.value, (tuple, list)) else (self.value, "")
             text_name = self.text_name_pattern % (self.name, choice[0])
-            r_attrs = self.attrs.copy()
-            if 'id' not in r_attrs.keys():
-                r_attrs['id'] = 'id_%s' % text_name
-            rw = fwidgets.RadioInput(self.name, value[0], r_attrs, choice, i)
+            rw = fwidgets.RadioInput(self.name, value[0], self.attrs.copy(), choice, i)
             widgets.append(rw)
-            attrs = dict(onfocus='javascript:document.getElementById("%s_%s").checked = true;return false;' % (rw.attrs['id'],
-                                                                                                               rw.index))
+            attrs = dict(onfocus='this.form.elements["%s"][%d].checked = true' % (self.name, i))
             widgets.append(fwidgets.TextInput().render(name=text_name, value=value[1], attrs=attrs))
         else:
             widgets.append(fwidgets.RadioInput(self.name, self.value, self.attrs.copy(), choice, i))
