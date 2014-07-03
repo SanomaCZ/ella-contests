@@ -3,6 +3,8 @@ import itertools
 from datetime import datetime
 
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.forms.models import BaseInlineFormSet
 from django.http import HttpResponse
 from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext_lazy as _
@@ -19,9 +21,19 @@ class QuestionInlineAdmin(admin.TabularInline):
     extra = 1
 
 
+class ChoiceInlineFormset(BaseInlineFormSet):
+    def clean(self):
+        super(ChoiceInlineFormset, self).clean()
+
+        correct_answers = [form.instance.is_correct for form in self.forms if form.instance.is_correct is True]
+        if len(correct_answers) > 1:
+            raise ValidationError(_("Only one correct choice is allowed per question"))
+
+
 class ChoiceInlineAdmin(admin.TabularInline):
     model = Choice
     extra = 1
+    formset = ChoiceInlineFormset
 
 
 class ContestAdmin(PublishableAdmin):
