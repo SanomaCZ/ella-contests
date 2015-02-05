@@ -65,3 +65,5 @@ INSTALLED_APPS = (
 
     'ella_contests',
 )
+
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'

@@ -6,7 +6,8 @@ try:
 except ImportError:  # Django < 1.4
     from django.conf.urls.defaults import patterns, url, include
 
-admin.autodiscover()
+from ella.utils.installedapps import call_modules
+call_modules(auto_discover=('register', 'admin',))
 
 urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
