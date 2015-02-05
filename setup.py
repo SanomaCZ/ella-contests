@@ -3,7 +3,6 @@ import ella_contests
 
 install_requires = [
     'Django',
-    'south>=0.7',
     'ella>=3.0.3',
 ]
 
