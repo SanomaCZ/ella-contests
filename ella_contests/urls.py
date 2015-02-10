@@ -7,11 +7,11 @@ except ImportError:  # Django < 1.4
     from django.conf.urls.defaults import patterns, url
 
 from ella_contests.views import (
-                                 contest_result,
-                                 contest_conditions,
-                                 contest_contestant,
-                                 contest_detail,
-                                 )
+    contest_result,
+    contest_conditions,
+    contest_contestant,
+    contest_detail,
+)
 
 
 urlpatterns = patterns('',
