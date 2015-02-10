@@ -5,6 +5,7 @@ from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
+from django.utils.translation import ugettext as _
 
 from ella.core.views import get_templates_from_publishable
 from ella.core.custom_urls import resolver
