@@ -1,4 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from django.utils.timezone import now
 from django.test import TestCase
 
 from ella.utils.test_helpers import create_basic_categories
@@ -7,22 +9,36 @@ from ella_contests.models import Question, Contest, Choice
 
 
 class ContestTestCase(TestCase):
+
+    def create_contest(self, title, slug, **kwargs):
+        now_date = now()
+        defaults = dict(
+            description=u'First Contest',
+            category=self.category_nested,
+            publish_from=now_date,
+            published=True,
+
+            text=u'Some contest text. \n',
+            text_results=u'Some contest result text. \n',
+            active_from=now_date,
+            active_till=now_date + timedelta(days=30)
+        )
+        lookup = defaults.copy()
+        lookup.update({'title': title, 'slug': slug})
+        lookup.update(kwargs)
+        return Contest.objects.create(**lookup)
+
     def setUp(self):
         super(ContestTestCase, self).setUp()
         create_basic_categories(self)
-        now_date = datetime.now()
-        self.contest = Contest.objects.create(
-                title=u'First Contest',
-                slug=u'first-contest',
-                description=u'First Contest',
-                category=self.category_nested,
-                publish_from=now_date,
-                published=True,
 
-                text=u'Some contest text. \n',
-                text_results=u'Some contest result text. \n',
-                active_from=now_date,
-                active_till=now_date + timedelta(days=30)
+        self.contest = self.create_contest(
+            title=u'First Contest',
+            slug=u'first-contest'
+        )
+        self.contest_question_less = self.create_contest(
+            title=u'Second Contest',
+            slug=u'second-contest'
         )
         self.questions = []
         self.choices = []
