@@ -1,4 +1,3 @@
-from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
 from django.template import RequestContext
 from django.shortcuts import render_to_response
@@ -12,6 +11,7 @@ from ella.core.custom_urls import resolver
 
 from ella_contests.forms import QuestionForm, ContestantForm
 from ella_contests.storages import storage
+from ella_contests.utils import transaction
 
 
 class ContestBaseView(FormView):
@@ -93,7 +93,7 @@ class ContestDetailFormView(ContestBaseView):
         return data
 
     @method_decorator(csrf_protect)
-    @method_decorator(transaction.commit_on_success)
+    @method_decorator(transaction.atomic)
     def dispatch(self, request, context, *args, **kwargs):
         self.context = context
         self.kwargs = kwargs
@@ -163,7 +163,7 @@ class ContestContestantView(ContestBaseView):
         return response
 
     @method_decorator(csrf_protect)
-    @method_decorator(transaction.commit_on_success)
+    @method_decorator(transaction.atomic)
     def dispatch(self, request, context, *args, **kwargs):
         self.context = context
         self.kwargs = kwargs
