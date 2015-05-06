@@ -97,7 +97,7 @@ class ContestAdmin(PublishableAdmin):
         else:
             obj = queryset[0]
             obj_slug = slugify(obj.title)
-            response = HttpResponse(mimetype='text/csv')
+            response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = 'attachment; filename=%s_%s.csv' % (obj_slug[:50],
                                                                                   datetime.now().strftime("%y_%m_%d_%H_%M"))
             all_required_questions = obj.question_set.filter(is_required=True).count()
