@@ -2,8 +2,14 @@ from itertools import chain
 
 from django import forms
 from django.forms import widgets as fwidgets
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_unicode, force_text
+
+try:
+    from django.forms.widgets import RadioChoiceInput
+except ImportError:
+    from django.forms.widgets import RadioInput as RadioChoiceInput
 
 
 class WidgetContainer(object):
@@ -27,13 +33,13 @@ class RadioFieldRenderer(fwidgets.RadioFieldRenderer):
         if choice[2]:
             value = self.value if isinstance(self.value, (tuple, list)) else (self.value, "")
             text_name = self.text_name_pattern % (self.name, choice[0])
-            rw = fwidgets.RadioInput(self.name, value[0], self.attrs.copy(), choice, i)
+            rw = RadioChoiceInput(self.name, value[0], self.attrs.copy(), choice, i)
             widgets.append(rw)
             attrs = dict(onfocus="o=this.form.elements['%s'];o=(typeof o.length==='undefined')?o:o[%d];o.checked=true;"
                                  % (self.name, i))
             widgets.append(fwidgets.TextInput().render(name=text_name, value=value[1], attrs=attrs))
         else:
-            widgets.append(fwidgets.RadioInput(self.name, self.value, self.attrs.copy(), choice, i))
+            widgets.append(RadioChoiceInput(self.name, self.value, self.attrs.copy(), choice, i))
         return widgets
 
     def __iter__(self):
@@ -43,6 +49,20 @@ class RadioFieldRenderer(fwidgets.RadioFieldRenderer):
     def __getitem__(self, idx):
         choice = self.choices[idx]  # Let the IndexError propogate
         return WidgetContainer(*self._get_widgets(choice, idx))
+
+    def render(self):
+        """
+        Outputs a <ul> for this set of choice fields.
+        If an id was given to the field, it is applied to the <ul> (each
+        item in the list will get an id of `$id_$i`).
+        """
+        id_ = self.attrs.get('id', None)
+        start_tag = format_html('<ul id="{0}">', id_) if id_ else '<ul>'
+        output = [start_tag]
+        for widget in self:
+            output.append(format_html(unicode('<li>{0}</li>'), force_text(widget)))
+        output.append('</ul>')
+        return mark_safe('\n'.join(output))
 
 
 class ContestRadioSelect(forms.RadioSelect):
