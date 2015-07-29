@@ -91,16 +91,6 @@ class TestChoice(ContestTestCase):
         super(TestChoice, self).setUp()
         self.choice = self.choices[1]
 
-    def test_clean_method_unique_correct_choice_per_question(self):
-        self.choices[2].is_correct = True
-        tools.assert_equals(self.choice.clean(), None)
-        self.choice.is_correct = True
-        tools.assert_raises(ValidationError, self.choice.clean)
-
-    def test_save_method_unique_correct_choice_per_question(self):
-        self.choice.is_correct = True
-        tools.assert_raises(IntegrityError, self.choice.save)
-
     def test_save_method_unique_order_choice_per_question(self):
         self.choice.order = 1
         tools.assert_raises(IntegrityError, self.choice.save)
