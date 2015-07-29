@@ -13,6 +13,7 @@ from ella.core.cache import cache_this
 from ella.core.admin import PublishableAdmin, ListingInlineAdmin, RelatedInlineAdmin
 
 from ella_contests.models import Contestant, Answer, Choice, Contest, Question
+from ella_contests.forms import ChoiceForm
 
 
 class QuestionInlineAdmin(admin.TabularInline):
@@ -24,10 +25,15 @@ class QuestionInlineAdmin(admin.TabularInline):
 class ChoiceInlineFormset(BaseInlineFormSet):
     def clean(self):
         super(ChoiceInlineFormset, self).clean()
-
-        correct_answers = [form.instance.is_correct for form in self.forms if form.instance.is_correct is True]
-        if len(correct_answers) > 1:
-            raise ValidationError(_("Only one correct choice is allowed per question"))
+        if any(self.errors):
+            return
+        correct_answers = tuple(
+            f.cleaned_data['is_correct']
+            for f in self.forms
+            if 'is_correct' in f.cleaned_data and f.cleaned_data['is_correct'] is True
+        )
+        if len(correct_answers) != 1:
+            raise ValidationError(_("You must specify one correct choice per question"))
 
 
 class ChoiceInlineAdmin(admin.TabularInline):
@@ -153,6 +159,7 @@ class ChoiceAdmin(admin.ModelAdmin):
     list_filter = ('question__contest__title', 'is_correct', 'inserted_by_user')
     search_fields = ('question__contest__title', 'question__text',)
     raw_id_fields = ('question',)
+    form = ChoiceForm
 
 
 class QuestionAdmin(admin.ModelAdmin):

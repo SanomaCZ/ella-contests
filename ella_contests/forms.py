@@ -87,3 +87,29 @@ class ContestantForm(forms.ModelForm):
         if not self._questions_valid():
             raise forms.ValidationError(_("Some of the questions are filled incorrect"))
         return self.cleaned_data
+
+
+class ChoiceForm(forms.ModelForm):
+
+    class Meta:
+        model = Choice
+        fields = '__all__'
+
+    def clean(self):
+        cls = self._meta.model
+        cleaned_data = super(ChoiceForm, self).clean()
+        question = cleaned_data.get('question', None)
+        is_correct = cleaned_data.get('is_correct', None)
+        obj_id = cleaned_data.get('id', None)
+        if question and is_correct:
+            try:
+                if not obj_id:
+                    if cls.objects.get(question=question, is_correct=True):
+                        raise forms.ValidationError(_("Only one correct choice is allowed per question"))
+                else:
+                    cls.objects.exclude(pk=obj_id).get(question=self.question, is_correct=True)
+                    raise forms.ValidationError(_("Only one correct choice is allowed per question"))
+            except Choice.DoesNotExist:
+                pass
+
+        return cleaned_data

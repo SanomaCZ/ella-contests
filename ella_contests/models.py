@@ -1,5 +1,4 @@
-from django.db import models, IntegrityError
-from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -158,27 +157,6 @@ class Choice(models.Model):
         verbose_name_plural = _('Choices')
         ordering = ('order',)
         unique_together = (('question', 'order', ),)
-
-    def clean(self):
-        #check that correct is only one choice per question
-        if self.question_id and self.is_correct:
-            try:
-                if not self.pk:
-                    if self.__class__.objects.get(question=self.question, is_correct=True).pk != self.pk:
-                        raise ValidationError(_("Only one correct choice is allowed per question"))
-                else:
-                    self.__class__.objects.exclude(pk=self.pk).get(question=self.question, is_correct=True)
-                    raise ValidationError(_("Only one correct choice is allowed per question"))
-            except Choice.DoesNotExist:
-                pass
-
-    def save(self, *args, **kwargs):
-        try:
-            self.clean()
-        except ValidationError, e:
-            raise IntegrityError(e.messages)
-
-        super(Choice, self).save(*args, **kwargs)
 
 
 class Contestant(models.Model):
