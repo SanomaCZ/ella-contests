@@ -1,4 +1,5 @@
 from django import forms
+from django.forms.models import BaseInlineFormSet
 from django.utils.translation import ugettext_lazy as _
 from django import template
 
@@ -18,8 +19,8 @@ def QuestionForm(question):
             return template.Template(text, name=template_name).render(template.Context({}))
         return text
     choice_field = ContestChoiceField(
-            choices=[(c.pk, use_render(c.choice), c.inserted_by_user) for c in question.choices],
-            required=True if question.is_required else False
+        choices=[(c.pk, use_render(c.choice), c.inserted_by_user) for c in question.choices],
+        required=True if question.is_required else False
     )
 
     class _QuestionForm(forms.Form):
@@ -76,7 +77,7 @@ class ContestantForm(forms.ModelForm):
                 forms_are_valid = False
             qforms.append((question, form))
         self.qforms = qforms
-        #set var for context use to template say that questions integrity fail
+        # set var for context use to template say that questions integrity fail
         self.view_instance.questions_data_invalid = not forms_are_valid
         return forms_are_valid
 
@@ -100,16 +101,29 @@ class ChoiceForm(forms.ModelForm):
         cleaned_data = super(ChoiceForm, self).clean()
         question = cleaned_data.get('question', None)
         is_correct = cleaned_data.get('is_correct', None)
-        obj_id = cleaned_data.get('id', None)
         if question and is_correct:
             try:
-                if not obj_id:
+                if not self.instance:
                     if cls.objects.get(question=question, is_correct=True):
                         raise forms.ValidationError(_("Only one correct choice is allowed per question"))
                 else:
-                    cls.objects.exclude(pk=obj_id).get(question=self.question, is_correct=True)
+                    cls.objects.exclude(pk=self.instance.pk).get(question=question, is_correct=True)
                     raise forms.ValidationError(_("Only one correct choice is allowed per question"))
             except Choice.DoesNotExist:
                 pass
 
         return cleaned_data
+
+
+class ChoiceInlineFormset(BaseInlineFormSet):
+    def clean(self):
+        super(ChoiceInlineFormset, self).clean()
+        if any(self.errors):
+            return
+        correct_answers = tuple(
+            f.cleaned_data['is_correct']
+            for f in self.forms
+            if 'is_correct' in f.cleaned_data and f.cleaned_data['is_correct'] is True
+        )
+        if len(correct_answers) != 1:
+            raise forms.ValidationError(_("You must specify one correct choice per question"))

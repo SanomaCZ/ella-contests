@@ -3,8 +3,6 @@ import itertools
 from datetime import datetime
 
 from django.contrib import admin
-from django.core.exceptions import ValidationError
-from django.forms.models import BaseInlineFormSet
 from django.http import HttpResponse
 from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext_lazy as _
@@ -13,27 +11,13 @@ from ella.core.cache import cache_this
 from ella.core.admin import PublishableAdmin, ListingInlineAdmin, RelatedInlineAdmin
 
 from ella_contests.models import Contestant, Answer, Choice, Contest, Question
-from ella_contests.forms import ChoiceForm
+from ella_contests.forms import ChoiceForm, ChoiceInlineFormset
 
 
 class QuestionInlineAdmin(admin.TabularInline):
     model = Question
     raw_id_fields = ('photo',)
     extra = 1
-
-
-class ChoiceInlineFormset(BaseInlineFormSet):
-    def clean(self):
-        super(ChoiceInlineFormset, self).clean()
-        if any(self.errors):
-            return
-        correct_answers = tuple(
-            f.cleaned_data['is_correct']
-            for f in self.forms
-            if 'is_correct' in f.cleaned_data and f.cleaned_data['is_correct'] is True
-        )
-        if len(correct_answers) != 1:
-            raise ValidationError(_("You must specify one correct choice per question"))
 
 
 class ChoiceInlineAdmin(admin.TabularInline):
