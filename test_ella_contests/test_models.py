@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from nose import tools
 from mock import patch
 
-from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from .cases import ContestTestCase
