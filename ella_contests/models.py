@@ -1,4 +1,7 @@
+from __future__ import unicode_literals
+
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -94,6 +97,7 @@ class Contest(Publishable):
         return False
 
 
+@python_2_unicode_compatible
 class Question(models.Model):
     contest = CachedForeignKey(Contest, verbose_name=_('Contest'))
     order = models.PositiveIntegerField(_('Order'), db_index=True)
@@ -102,10 +106,12 @@ class Question(models.Model):
     text = models.TextField()
     is_required = models.BooleanField(_('Is required'), default=True, db_index=True)
 
-    def __unicode__(self):
-        return u'%s - %s %d' % (self.contest if self.contest_id else 'Contest',
-                                _('Question'),
-                                self.order)
+    def __str__(self):
+        return '%s - %s %d' % (
+            self.contest if self.contest_id else 'Contest',
+            _('Question'),
+            self.order
+        )
 
     class Meta:
         verbose_name = _('Question')
@@ -142,6 +148,7 @@ class Question(models.Model):
             return None
 
 
+@python_2_unicode_compatible
 class Choice(models.Model):
     question = CachedForeignKey(Question, verbose_name=_('Question'))
     choice = models.TextField(_('Choice text'))
@@ -149,8 +156,8 @@ class Choice(models.Model):
     is_correct = models.BooleanField(_('Is correct'), default=False, db_index=True)
     inserted_by_user = models.BooleanField(_('Answare inserted by user'), default=False)
 
-    def __unicode__(self):
-        return u'%s: choice (%d)' % (self.question if self.question_id else 'Choice', self.order)
+    def __str__(self):
+        return '%s: choice (%d)' % (self.question if self.question_id else 'Choice', self.order)
 
     class Meta:
         verbose_name = _('Choice')
@@ -159,6 +166,7 @@ class Choice(models.Model):
         unique_together = (('question', 'order', ),)
 
 
+@python_2_unicode_compatible
 class Contestant(models.Model):
     """
     Contestant info.
@@ -180,8 +188,8 @@ class Contestant(models.Model):
         unique_together = (('contest', 'email',),)
         ordering = ('-created',)
 
-    def __unicode__(self):
-        return u'%s %s' % (self.surname, self.name)
+    def __str__(self):
+        return '%s %s' % (self.surname, self.name)
 
     def save(self, **kwargs):
         if not self.id:
@@ -196,14 +204,17 @@ class Contestant(models.Model):
         return self.answer_set.exclude(choice__inserted_by_user=False)
 
 
+@python_2_unicode_compatible
 class Answer(models.Model):
     contestant = CachedForeignKey(Contestant, verbose_name=_('Contestant'))
     choice = CachedForeignKey(Choice, verbose_name=_('Choice'))
     answer = models.TextField(_('Answer text'), blank=True)
 
-    def __unicode__(self):
-        return u'%s: %s' % (self.contestant if self.contestant_id else 'Contestant',
-                            self.choice if self.choice_id else 'Choice',)
+    def __str__(self):
+        return '%s: %s' % (
+            self.contestant if self.contestant_id else 'Contestant',
+            self.choice if self.choice_id else 'Choice',
+        )
 
     class Meta:
         verbose_name = _('Answer')

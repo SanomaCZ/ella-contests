@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from datetime import datetime, timedelta
 from nose import tools
 from mock import patch
@@ -101,23 +103,23 @@ class TestContestant(ContestTestCase):
         super(TestContestant, self).setUp()
         self.contestant = Contestant.objects.create(
             contest=self.contest,
-            name=u'Joe',
-            surname=u'Good',
-            email=u'joe@joe.cz',
+            name='Joe',
+            surname='Good',
+            email='joe@joe.cz',
             phone_number='777777777',
-            address=u'XX street 123'
+            address='XX street 123'
         )
         self.contestant2 = Contestant.objects.create(
             contest=self.contest,
-            name=u'Mike',
-            surname=u'Good',
-            email=u'mike@mike.cz',
+            name='Mike',
+            surname='Good',
+            email='mike@mike.cz',
             phone_number='777777555',
-            address=u'YY street 321'
+            address='YY street 321'
         )
         self.answers = [
             Answer.objects.create(contestant=self.contestant, choice=self.choices[2]),
-            Answer.objects.create(contestant=self.contestant, choice=self.choices[5], answer=u"hi"),
+            Answer.objects.create(contestant=self.contestant, choice=self.choices[5], answer="hi"),
             Answer.objects.create(contestant=self.contestant, choice=self.choices[8]),
 
             Answer.objects.create(contestant=self.contestant2, choice=self.choices[1]),

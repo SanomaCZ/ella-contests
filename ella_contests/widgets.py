@@ -1,10 +1,12 @@
+from __future__ import unicode_literals
+
 from itertools import chain
 
 from django import forms
 from django.forms import widgets as fwidgets
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode, force_text
+from django.utils.encoding import force_text, python_2_unicode_compatible
 
 try:
     from django.forms.widgets import RadioChoiceInput
@@ -12,13 +14,14 @@ except ImportError:
     from django.forms.widgets import RadioInput as RadioChoiceInput
 
 
+@python_2_unicode_compatible
 class WidgetContainer(object):
 
     def __init__(self, *widgets):
         self.widgets = widgets
 
-    def __unicode__(self):
-        return mark_safe(u" ".join(force_unicode(w) for w in self.widgets))
+    def __str__(self):
+        return mark_safe(" ".join(force_text(w) for w in self.widgets))
 
 
 class RadioFieldRenderer(fwidgets.RadioFieldRenderer):
@@ -60,7 +63,7 @@ class RadioFieldRenderer(fwidgets.RadioFieldRenderer):
         start_tag = format_html('<ul id="{0}">', id_) if id_ else '<ul>'
         output = [start_tag]
         for widget in self:
-            output.append(format_html(unicode('<li>{0}</li>'), force_text(widget)))
+            output.append(format_html(force_text('<li>{0}</li>'), force_text(widget)))
         output.append('</ul>')
         return mark_safe('\n'.join(output))
 
@@ -75,13 +78,13 @@ class ContestRadioSelect(forms.RadioSelect):
             value, text = value
         if value is None:
             value = ''
-        value = force_unicode(value)  # Normalize to string.
+        value = force_text(value)  # Normalize to string.
         final_attrs = self.build_attrs(attrs)
         choices = list(chain(self.choices, choices))
         if is_tuple:
             if text is None:
                 text = ''
-            text = force_unicode(text)  # Normalize to string.
+            text = force_text(text)  # Normalize to string.
             value = (value, text)
         return self.renderer(name, value, final_attrs, choices)
 

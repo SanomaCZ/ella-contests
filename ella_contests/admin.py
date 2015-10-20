@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import csv
 import itertools
 from datetime import datetime
@@ -76,11 +78,11 @@ class ContestAdmin(PublishableAdmin):
 
     def state(self, obj):
         if obj.is_not_yet_active:
-            return u"%s" % _('Is not yet active')
+            return "%s" % _('Is not yet active')
         elif obj.is_closed:
-            return u"%s" % _('Is closed')
+            return "%s" % _('Is closed')
         else:
-            return u"%s" % _('Is active now')
+            return "%s" % _('Is active now')
     state.short_description = _('State')
 
     def get_urls(self):
@@ -142,7 +144,7 @@ class ContestAdmin(PublishableAdmin):
                     try:
                         a, ch = answers_dict[q.pk]
                     except KeyError:
-                        answers.append(encode_item(u""))
+                        answers.append(encode_item(""))
                     else:
                         if ch.inserted_by_user:
                             answers.append(encode_item(a))
@@ -163,7 +165,7 @@ class ContestAdmin(PublishableAdmin):
 
     def results_export(self, obj):
         return mark_safe(
-            u"""
+            """
                 <a href='%(url)s'>%(csv)s</a>
             """ % {
                 'url': reverse('admin:ella-contests-contest-results-export', args=(obj.id,)),
@@ -175,7 +177,7 @@ class ContestAdmin(PublishableAdmin):
 
 
 class ChoiceAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'is_correct', 'inserted_by_user')
+    list_display = ('__str__', 'is_correct', 'inserted_by_user')
     list_filter = ('question__contest__title', 'is_correct', 'inserted_by_user')
     search_fields = ('question__contest__title', 'question__text',)
     raw_id_fields = ('question',)
@@ -183,7 +185,7 @@ class ChoiceAdmin(admin.ModelAdmin):
 
 
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'is_required', 'has_set_correct_choice')
+    list_display = ('__str__', 'is_required', 'has_set_correct_choice')
     list_filter = ('contest__title', 'is_required',)
     search_fields = ('contest__title',)
     raw_id_fields = ('contest', 'photo',)
@@ -199,14 +201,14 @@ class QuestionAdmin(admin.ModelAdmin):
 
 
 class ContestantAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'email', 'created')
+    list_display = ('__str__', 'email', 'created')
     list_filter = ('contest__title',)
     search_fields = ('contest__title',)
     raw_id_fields = ('contest', 'user',)
 
 
 class AnswerAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'answer',)
+    list_display = ('__str__', 'answer',)
     search_fields = ('contestant__name', 'contestant__surname',)
     raw_id_fields = ('contestant', 'choice',)
 

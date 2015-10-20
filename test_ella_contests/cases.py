@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from datetime import timedelta
 
 from django.utils.timezone import now
@@ -43,13 +45,13 @@ class ContestTestCase(TestCase):
     def create_contest(self, title, slug, **kwargs):
         now_date = now()
         defaults = dict(
-            description=u'First Contest',
+            description='First Contest',
             category=self.category_nested,
             publish_from=now_date,
             published=True,
 
-            text=u'Some contest text. \n',
-            text_results=u'Some contest result text. \n',
+            text='Some contest text. \n',
+            text_results='Some contest result text. \n',
             active_from=now_date,
             active_till=now_date + timedelta(days=30)
         )
@@ -63,12 +65,12 @@ class ContestTestCase(TestCase):
         create_basic_categories(self)
 
         self.contest = self.create_contest(
-            title=u'First Contest',
-            slug=u'first-contest'
+            title='First Contest',
+            slug='first-contest'
         )
         self.contest_question_less = self.create_contest(
-            title=u'Second Contest',
-            slug=u'second-contest'
+            title='Second Contest',
+            slug='second-contest'
         )
         self.questions = []
         self.choices = []

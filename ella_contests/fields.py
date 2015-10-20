@@ -1,5 +1,7 @@
+from __future__ import unicode_literals
+
 from django import forms
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_text
 from django.core import validators
 
 from ella_contests.widgets import ContestRadioSelect
@@ -13,12 +15,12 @@ class ContestChoiceField(forms.ChoiceField):
         if isinstance(value, (tuple, list)):
             value, text = value
             if value in validators.EMPTY_VALUES:
-                return (u'', smart_unicode(text))
-            return (smart_unicode(value), smart_unicode(text))
+                return ('', smart_text(text))
+            return (smart_text(value), smart_text(text))
         else:
             if value in validators.EMPTY_VALUES:
-                return u''
-            return smart_unicode(value)
+                return ''
+            return smart_text(value)
 
     def validate(self, value):
         """
@@ -33,6 +35,6 @@ class ContestChoiceField(forms.ChoiceField):
     def valid_value(self, value):
         "Check to see if the provided value is a valid choice"
         for k, v, t in self.choices:
-            if value == smart_unicode(k):
+            if value == smart_text(k):
                 return True
         return False

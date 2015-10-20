@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from nose import tools
 
 from django.forms.models import inlineformset_factory
@@ -176,7 +178,7 @@ class TestChiceFormSet(ContestTestCase):
         }
         f = self.formset(data, instance=question)
         tools.assert_false(f.is_valid())
-        tools.assert_in(unicode('You must specify one correct choice per question'), f.non_form_errors())
+        tools.assert_in('You must specify one correct choice per question', f.non_form_errors())
         tools.assert_equals(Choice.objects.filter(question=question).count(), 0)
 
     def test_formset_invalid_if_no_correct_choice(self):
@@ -205,7 +207,7 @@ class TestChiceFormSet(ContestTestCase):
         }
         f = self.formset(data, instance=question)
         tools.assert_false(f.is_valid())
-        tools.assert_in(unicode('You must specify one correct choice per question'), f.non_form_errors())
+        tools.assert_in('You must specify one correct choice per question', f.non_form_errors())
         tools.assert_equals(Choice.objects.filter(question=question).count(), 0)
 
     def test_update_success_for_one_correct_choice(self):
@@ -282,7 +284,7 @@ class TestChiceFormSet(ContestTestCase):
 
         f = self.formset(data, instance=question)
         tools.assert_false(f.is_valid())
-        tools.assert_in(unicode('You must specify one correct choice per question'), f.non_form_errors())
+        tools.assert_in('You must specify one correct choice per question', f.non_form_errors())
         tools.assert_equals(Choice.objects.filter(question=question).count(), 3)
         tools.assert_equals(Choice.objects.filter(question=question, is_correct=True).count(), 1)
 
@@ -305,6 +307,6 @@ class TestChiceFormSet(ContestTestCase):
 
         f = self.formset(data, instance=question)
         tools.assert_false(f.is_valid())
-        tools.assert_in(unicode('You must specify one correct choice per question'), f.non_form_errors())
+        tools.assert_in('You must specify one correct choice per question', f.non_form_errors())
         tools.assert_equals(Choice.objects.filter(question=question).count(), 3)
         tools.assert_equals(Choice.objects.filter(question=question, is_correct=True).count(), 1)
