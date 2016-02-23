@@ -90,24 +90,34 @@ class ContestAdmin(PublishableAdmin):
         extra_urls = patterns(
             '',
             url(
-                r'^(\d+)/results-export/$',
+                r'^(\d+)/results-export/all/$',
                 self.admin_site.admin_view(self.results_export_view),
                 name='ella-contests-contest-results-export'
             ),
+            url(
+                r'^(\d+)/results-export/all-correct/$',
+                self.admin_site.admin_view(self.correct_results_export_view),
+                name='ella-contests-contest-correct-results-export'
+            )
         )
         return extra_urls + urls
 
-    def results_export_view(self, request, contest_pk, extra_context=None):
-        contest = get_cached_object_or_404(Contest, pk=contest_pk)
-        return self.results_to_csv(request, contest)
+    def correct_results_export_view(self, *args, **kwargs):
+        kwargs['all_correct'] = True
+        return self.results_export_view(*args, **kwargs)
 
-    def results_to_csv(self, request, contest):
+    def results_export_view(self, request, contest_pk, extra_context=None, all_correct=False):
+        contest = get_cached_object_or_404(Contest, pk=contest_pk)
+        return self.results_to_csv(request, contest, all_correct=all_correct)
+
+    def results_to_csv(self, request, contest, all_correct=False):
         contest_slug = slugify(contest.title)
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=%s_%s.csv' % (
             contest_slug[:50],
             datetime.now().strftime("%y_%m_%d_%H_%M")
         )
+
         all_required_questions = contest.question_set.filter(is_required=True).count()
         writer = csv.writer(response)
         head = [
@@ -128,6 +138,9 @@ class ContestAdmin(PublishableAdmin):
         else:
             writer.writerow(list(head))
             for obj in contest.contestant_set.all():
+                right_answers_count = obj.my_right_answers.count()
+                if all_correct and right_answers_count != all_required_questions:
+                    continue
                 row = [
                     encode_item(obj.name),
                     encode_item(obj.surname),
@@ -135,7 +148,7 @@ class ContestAdmin(PublishableAdmin):
                     encode_item(obj.phone_number),
                     encode_item(obj.address),
                     encode_item(obj.created.strftime("%d.%m.%Y %H:%M:%S")),
-                    encode_item(obj.my_right_answers.count()),
+                    encode_item(right_answers_count),
                     encode_item(all_required_questions),
                 ]
                 answers_dict = dict([(a.choice.question_id, (a.answer, a.choice)) for a in obj.answer_set.all()])
@@ -163,15 +176,22 @@ class ContestAdmin(PublishableAdmin):
 
     results_to_csv_action.short_description = _("Results")
 
-    def results_export(self, obj):
+    def get_safe_url(self, obj, url_name, url_title):
         return mark_safe(
             """
-                <a href='%(url)s'>%(csv)s</a>
+                <a href='%(url)s'>%(url_title)s</a>
             """ % {
-                'url': reverse('admin:ella-contests-contest-results-export', args=(obj.id,)),
-                'csv': _('csv'),
+                'url': reverse('admin:%s' % url_name, args=(obj.id,)),
+                'url_title': url_title,
             }
         )
+
+    def results_export(self, obj):
+        links = [
+            self.get_safe_url(obj, "ella-contests-contest-results-export", _('All')),
+            self.get_safe_url(obj, "ella-contests-contest-correct-results-export", _('All correct answers')),
+        ]
+        return mark_safe("<br /><br />".join(links))
     results_export.allow_tags = True
     results_export.short_description = _('Results export')
 
