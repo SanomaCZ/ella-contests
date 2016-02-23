@@ -5,7 +5,8 @@ import itertools
 from datetime import datetime
 
 from django.contrib import admin
-from django.http import HttpResponse
+from django.contrib import messages
+from django.http import HttpResponse, HttpResponseRedirect
 from django.conf.urls import patterns, url
 from django.utils.safestring import mark_safe
 from django.template.defaultfilters import slugify
@@ -50,7 +51,9 @@ class ContestAdmin(PublishableAdmin):
         'results_export',
     )
     inlines = [ListingInlineAdmin, RelatedInlineAdmin, QuestionInlineAdmin]
-    actions = PublishableAdmin.actions + ['results_to_csv_action']
+    export_types = [
+        ('csv', _('csv')),
+    ]
 
     def contestants_count(self, obj):
         if obj.is_not_yet_active:
@@ -108,15 +111,30 @@ class ContestAdmin(PublishableAdmin):
 
     def results_export_view(self, request, contest_pk, extra_context=None, all_correct=False):
         contest = get_cached_object_or_404(Contest, pk=contest_pk)
-        return self.results_to_csv(request, contest, all_correct=all_correct)
+        return self.results_export_response(request, contest, all_correct=all_correct)
 
-    def results_to_csv(self, request, contest, all_correct=False):
+    def results_export_response(self, request, contest, all_correct=False):
         contest_slug = slugify(contest.title)
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=%s_%s.csv' % (
+        file_name = "%s_%s" % (
             contest_slug[:50],
             datetime.now().strftime("%y_%m_%d_%H_%M")
         )
+
+        if request.GET.get('type') not in [t for t, n in self.export_types]:
+            self.message_user(request, _("Unknown format for export"), level=messages.WARNING)
+            return HttpResponseRedirect(reverse("admin:ella_contests_contest_changelist"))
+
+        method = 'results_export_response_%s' % request.GET.get('type')
+
+        if not hasattr(self, method):
+            self.message_user(request, _("I have no handler for this format"), level=messages.WARNING)
+            return HttpResponseRedirect(reverse("admin:ella_contests_contest_changelist"))
+
+        return getattr(self, method)(request, contest, all_correct, file_name)
+
+    def results_export_response_csv(self, request, contest, all_correct, file_name):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=%s.csv' % file_name
 
         all_required_questions = contest.question_set.filter(is_required=True).count()
         writer = csv.writer(response)
@@ -134,7 +152,8 @@ class ContestAdmin(PublishableAdmin):
         try:
             head = itertools.chain(head, [encode_item("q %s (%s)" % (q.order, q.choice_set.get(is_correct=True).order)) for q in all_questions])
         except Choice.DoesNotExist:
-            self.message_user(request, _("I can not export data becouse of any questions has not set choice as correct"))
+            self.message_user(request, _("I can not export data becouse of any questions has not set choice as correct"), level=messages.WARNING)
+            return HttpResponseRedirect(reverse("admin:ella_contests_contest_changelist"))
         else:
             writer.writerow(list(head))
             for obj in contest.contestant_set.all():
@@ -167,31 +186,26 @@ class ContestAdmin(PublishableAdmin):
                 writer.writerow(list(row))
             return response
 
-    def results_to_csv_action(self, request, queryset):
-
-        if queryset.count() != 1:
-            self.message_user(request, _("I can not return results for multiple contests at once"))
-        else:
-            return self.results_to_csv(request, queryset[0])
-
-    results_to_csv_action.short_description = _("Results")
-
-    def get_safe_url(self, obj, url_name, url_title):
+    def get_safe_url(self, obj, url_name, export_title, export_type):
         return mark_safe(
             """
-                <a href='%(url)s'>%(url_title)s</a>
+                <a href='%(url)s?type=%(export_type)s'>%(export_title)s</a>
             """ % {
                 'url': reverse('admin:%s' % url_name, args=(obj.id,)),
-                'url_title': url_title,
+                'export_title': export_title,
+                'export_type': export_type,
             }
         )
 
     def results_export(self, obj):
-        links = [
-            self.get_safe_url(obj, "ella-contests-contest-results-export", _('All')),
-            self.get_safe_url(obj, "ella-contests-contest-correct-results-export", _('All correct answers')),
+        def get_links(obj, url_name, export_types):
+            return "".join([self.get_safe_url(obj, url_name, n, t) for t, n in export_types])
+
+        items = [
+            "%s: %s" % (_('All'), get_links(obj, "ella-contests-contest-results-export", self.export_types)),
+            "%s: %s" % (_('All correct answers'), get_links(obj, "ella-contests-contest-correct-results-export", self.export_types))
         ]
-        return mark_safe("<br /><br />".join(links))
+        return mark_safe("<br /><br />".join(items))
     results_export.allow_tags = True
     results_export.short_description = _('Results export')
 
