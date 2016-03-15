@@ -1,12 +1,10 @@
 from __future__ import unicode_literals
 
-import csv
-import itertools
 from datetime import datetime
 
 from django.contrib import admin
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.conf.urls import patterns, url
 from django.utils.safestring import mark_safe
 from django.template.defaultfilters import slugify
@@ -16,9 +14,9 @@ from django.core.urlresolvers import reverse
 from ella.core.cache import cache_this, get_cached_object_or_404
 from ella.core.admin import PublishableAdmin, ListingInlineAdmin, RelatedInlineAdmin
 
-from ella_contests.utils import encode_item
 from ella_contests.models import Contestant, Answer, Choice, Contest, Question
 from ella_contests.forms import ChoiceForm, ChoiceInlineFormset
+from ella_contests.exporters import ExportDataContainer, export_to_csv, export_to_xls
 
 
 class QuestionInlineAdmin(admin.TabularInline):
@@ -51,9 +49,11 @@ class ContestAdmin(PublishableAdmin):
         'results_export',
     )
     inlines = [ListingInlineAdmin, RelatedInlineAdmin, QuestionInlineAdmin]
-    export_types = [
-        ('csv', _('csv')),
-    ]
+    export_data_container_class = ExportDataContainer
+    export_types = {
+        'csv': (_('csv'), export_to_csv),
+        'xls': (_('xls'), export_to_xls),
+    }
 
     def contestants_count(self, obj):
         if obj.is_not_yet_active:
@@ -120,71 +120,19 @@ class ContestAdmin(PublishableAdmin):
             datetime.now().strftime("%y_%m_%d_%H_%M")
         )
 
-        if request.GET.get('type') not in [t for t, n in self.export_types]:
+        if request.GET.get('type') not in self.export_types:
             self.message_user(request, _("Unknown format for export"), level=messages.WARNING)
             return HttpResponseRedirect(reverse("admin:ella_contests_contest_changelist"))
 
-        method = 'results_export_response_%s' % request.GET.get('type')
+        export_name, export_func = self.export_types[request.GET.get('type')]
 
-        if not hasattr(self, method):
-            self.message_user(request, _("I have no handler for this format"), level=messages.WARNING)
-            return HttpResponseRedirect(reverse("admin:ella_contests_contest_changelist"))
-
-        return getattr(self, method)(request, contest, all_correct, file_name)
-
-    def results_export_response_csv(self, request, contest, all_correct, file_name):
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=%s.csv' % file_name
-
-        all_required_questions = contest.question_set.filter(is_required=True).count()
-        writer = csv.writer(response)
-        head = [
-            encode_item(_('First name')),
-            encode_item(_('Last name')),
-            encode_item(_('email')),
-            encode_item(_('Phone number')),
-            encode_item(_('Address')),
-            encode_item(_('Created')),
-            encode_item(_('Count of right answers')),
-            encode_item(_('Count of all possible right answers')),
-        ]
-        all_questions = contest.questions
         try:
-            head = itertools.chain(head, [encode_item("q %s (%s)" % (q.order, q.choice_set.get(is_correct=True).order)) for q in all_questions])
-        except Choice.DoesNotExist:
+            response = export_func(contest, all_correct, file_name, data_container_class=self.export_data_container_class)
+        except self.export_data_container_class.IncorrectHeadData:
             self.message_user(request, _("I can not export data becouse of any questions has not set choice as correct"), level=messages.WARNING)
             return HttpResponseRedirect(reverse("admin:ella_contests_contest_changelist"))
-        else:
-            writer.writerow(list(head))
-            for obj in contest.contestant_set.all():
-                right_answers_count = obj.my_right_answers.count()
-                if all_correct and right_answers_count != all_required_questions:
-                    continue
-                row = [
-                    encode_item(obj.name),
-                    encode_item(obj.surname),
-                    encode_item(obj.email),
-                    encode_item(obj.phone_number),
-                    encode_item(obj.address),
-                    encode_item(obj.created.strftime("%d.%m.%Y %H:%M:%S")),
-                    encode_item(right_answers_count),
-                    encode_item(all_required_questions),
-                ]
-                answers_dict = dict([(a.choice.question_id, (a.answer, a.choice)) for a in obj.answer_set.all()])
-                answers = []
-                for q in all_questions:
-                    try:
-                        a, ch = answers_dict[q.pk]
-                    except KeyError:
-                        answers.append(encode_item(""))
-                    else:
-                        if ch.inserted_by_user:
-                            answers.append(encode_item(a))
-                        else:
-                            answers.append(encode_item(ch.order))
-                row = itertools.chain(row, answers)
-                writer.writerow(list(row))
-            return response
+
+        return response
 
     def get_safe_url(self, obj, url_name, export_title, export_type):
         return mark_safe(
@@ -199,7 +147,7 @@ class ContestAdmin(PublishableAdmin):
 
     def results_export(self, obj):
         def get_links(obj, url_name, export_types):
-            return "".join([self.get_safe_url(obj, url_name, n, t) for t, n in export_types])
+            return "".join([self.get_safe_url(obj, url_name, name_and_func[0], t) for t, name_and_func in export_types.items()])
 
         items = [
             "%s: %s" % (_('All'), get_links(obj, "ella-contests-contest-results-export", self.export_types)),

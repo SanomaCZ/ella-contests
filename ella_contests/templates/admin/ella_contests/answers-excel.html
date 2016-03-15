@@ -1,0 +1,36 @@
+<html>
+<head>
+<meta charset="utf-8">
+
+<style>
+    /* special formatting for Excel*/
+    .excel-num {
+         mso-number-format:General;
+    }
+    .excel-text{
+        mso-number-format:"\@";/*force text*/
+    }
+</style>
+
+</head>
+<body>
+	<table cellspacing="0">
+		<thead>
+			<tr>
+				{% for item in head %}
+					<th>{{ item }}</th>
+				{% endfor %}
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in rows %}
+				<tr class="{% cycle 'row1' 'row2' %}">
+					{% for item in row %}
+						<td>{{ item }}</td>
+					{% endfor %}
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</body>
+</html>
