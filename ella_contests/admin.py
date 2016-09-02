@@ -5,7 +5,7 @@ from datetime import datetime
 from django.contrib import admin
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.utils.safestring import mark_safe
 from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext_lazy as _
@@ -90,8 +90,7 @@ class ContestAdmin(PublishableAdmin):
 
     def get_urls(self):
         urls = super(ContestAdmin, self).get_urls()
-        extra_urls = patterns(
-            '',
+        extra_urls = [
             url(
                 r'^(\d+)/results-export/all/$',
                 self.admin_site.admin_view(self.results_export_view),
@@ -102,7 +101,7 @@ class ContestAdmin(PublishableAdmin):
                 self.admin_site.admin_view(self.correct_results_export_view),
                 name='ella-contests-contest-correct-results-export'
             )
-        )
+        ]
         return extra_urls + urls
 
     def correct_results_export_view(self, *args, **kwargs):
