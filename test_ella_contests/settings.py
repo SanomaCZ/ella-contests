@@ -8,16 +8,11 @@ ROOT_URLCONF = 'test_ella_contests.urls'
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-)
 
 TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.core.context_processors.debug',
-    'django.core.context_processors.media',
-    'django.core.context_processors.static',
-    'django.core.context_processors.request',
+    'django.template.context_processors.debug',
+    'django.template.context_processors.media',
+    'django.template.context_processors.static',
     'django.contrib.auth.context_processors.auth',
 )
 
@@ -27,6 +22,19 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
     join(PROJECT_ROOT, 'templates'),
 )
+
+TEMPLATE_OPTIONS = {
+    'context_processors': TEMPLATE_CONTEXT_PROCESSORS,
+}
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        # 'APP_DIRS': True,
+        'DIRS': TEMPLATE_DIRS,
+        'OPTIONS': TEMPLATE_OPTIONS
+    },
+]
 
 SECRET_KEY = 'very-secret'
 
