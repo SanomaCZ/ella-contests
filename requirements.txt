@@ -1,2 +1,2 @@
-Django
+Django>=1.8
 ella>=3.0.3

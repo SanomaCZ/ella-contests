@@ -2,13 +2,14 @@ from setuptools import setup, find_packages
 import ella_contests
 
 install_requires = [
-    'Django',
+    'Django>=1.8',
     'ella>=3.0.3',
 ]
 
 tests_require = [
     'nose',
     'coverage',
+    'mock',
 ]
 
 long_description = open('README.rst').read()
@@ -36,11 +37,9 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Framework :: Django",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.2",
-        "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
         "Operating System :: OS Independent",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
         "Topic :: Software Development :: Libraries :: Python Modules",
