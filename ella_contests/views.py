@@ -1,5 +1,4 @@
 from django.http import Http404, HttpResponseRedirect
-from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
@@ -181,10 +180,12 @@ def contest_result(request, context):
     template_name = 'result.html'
     if request.is_ajax():
         template_name = 'result_async.html'
+
+    context.update({'request': request})
+
     return render_to_response(
         get_templates_from_publishable(template_name, context['object']),
-        context,
-        context_instance=RequestContext(request)
+        context
     )
 
 
@@ -192,10 +193,12 @@ def contest_conditions(request, context):
     template_name = 'conditions.html'
     if request.is_ajax():
         template_name = 'conditions_async.html'
+
+    context.update({'request': request})
+
     return render_to_response(
         get_templates_from_publishable(template_name, context['object']),
-        context,
-        context_instance=RequestContext(request)
+        context
     )
 
 
