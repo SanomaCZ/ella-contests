@@ -1,8 +1,7 @@
 from django.http import Http404, HttpResponseRedirect
-from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 from django.utils.translation import ugettext as _
 
 from ella.core.views import get_templates_from_publishable
@@ -13,15 +12,34 @@ from ella_contests.storages import storage
 from ella_contests.utils import transaction
 
 
-class ContestBaseView(FormView):
-    template_name = None
-    ajax_template_name = None
+class ContestMixin(object):
+
+    def dispatch(self, request, context, *args, **kwargs):
+        self.context = context
+        self.kwargs = kwargs
+        return super(ContestMixin, self).dispatch(request, *args, **kwargs)
 
     @property
     def contest(self):
         if not hasattr(self, '_contest'):
             self._contest = self.context['object']
         return self._contest
+
+    def get_template_names(self):
+        template_name = self.template_name
+        if self.request.is_ajax():
+            template_name = self.ajax_template_name
+        return get_templates_from_publishable(template_name, self.contest)
+
+    def get_context_data(self, **kwargs):
+        data = super(ContestMixin, self).get_context_data(**kwargs)
+        data.update(self.context)
+        return data
+
+
+class ContestBaseFormView(ContestMixin, FormView):
+    template_name = None
+    ajax_template_name = None
 
     @property
     def current_page(self):
@@ -46,19 +64,8 @@ class ContestBaseView(FormView):
             self._next_question = self.question.next
         return self._next_question
 
-    def get_template_names(self):
-        template_name = self.template_name
-        if self.request.is_ajax():
-            template_name = self.ajax_template_name
-        return get_templates_from_publishable(template_name, self.contest)
 
-    def get_context_data(self, **kwargs):
-        data = super(ContestBaseView, self).get_context_data(**kwargs)
-        data.update(self.context)
-        return data
-
-
-class ContestDetailFormView(ContestBaseView):
+class ContestDetailFormView(ContestBaseFormView):
     template_name = 'form.html'
     ajax_template_name = 'form_async.html'
 
@@ -100,7 +107,7 @@ class ContestDetailFormView(ContestBaseView):
         last_step = storage.get_last_step(self.contest, request)
         if last_step is None:
             if self.current_page == 1:
-                return super(ContestDetailFormView, self).dispatch(request, *args, **kwargs)
+                return super(ContestDetailFormView, self).dispatch(request, context, *args, **kwargs)
             url = resolver.reverse(self.contest, 'ella-contests-contests-detail', question_number=1)
             return HttpResponseRedirect(url)
         if self.current_page != last_step + 1:
@@ -110,10 +117,10 @@ class ContestDetailFormView(ContestBaseView):
             else:
                 url = resolver.reverse(self.contest, 'ella-contests-contests-contestant')
             return HttpResponseRedirect(url)
-        return super(ContestDetailFormView, self).dispatch(request, *args, **kwargs)
+        return super(ContestDetailFormView, self).dispatch(request, context, *args, **kwargs)
 
 
-class ContestContestantView(ContestBaseView):
+class ContestContestantView(ContestBaseFormView):
     template_name = 'contestant.html'
     ajax_template_name = 'contestant_async.html'
     form_class = ContestantForm
@@ -173,34 +180,20 @@ class ContestContestantView(ContestBaseView):
         if self.contest.questions_count != last_step:
             url = resolver.reverse(self.contest, 'ella-contests-contests-detail', question_number=last_step + 1)
             return HttpResponseRedirect(url)
-        return super(ContestContestantView, self).dispatch(request, *args, **kwargs)
+        return super(ContestContestantView, self).dispatch(request, context, *args, **kwargs)
 
 
-def contest_result(request, context):
+class ContestResultView(ContestMixin, TemplateView):
     template_name = 'result.html'
-    if request.is_ajax():
-        template_name = 'result_async.html'
-
-    context.update({'request': request})
-
-    return render_to_response(
-        get_templates_from_publishable(template_name, context['object']),
-        context
-    )
+    ajax_template_name = 'result_async.html'
 
 
-def contest_conditions(request, context):
+class ContestConditionsView(ContestMixin, TemplateView):
     template_name = 'conditions.html'
-    if request.is_ajax():
-        template_name = 'conditions_async.html'
-
-    context.update({'request': request})
-
-    return render_to_response(
-        get_templates_from_publishable(template_name, context['object']),
-        context
-    )
+    ajax_template_name = 'conditions_async.html'
 
 
 contest_detail = ContestDetailFormView.as_view()
 contest_contestant = ContestContestantView.as_view()
+contest_result = ContestResultView.as_view()
+contest_conditions = ContestConditionsView.as_view()
